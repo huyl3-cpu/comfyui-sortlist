@@ -1,11 +1,3 @@
-# comfyui-huyl2-nodes
-
-Custom nodes for ComfyUI by **huyl2**.
-
-## Nodes
-
-### `sort list v2 (huyl2)`
-
 An upgraded list sort node with multiple modes:
 
 - `default`      – normal string sort  
@@ -17,3 +9,4 @@ An upgraded list sort node with multiple modes:
 - `random`       – shuffle with a deterministic seed  
 
 Put this folder under `ComfyUI/custom_nodes/` and restart ComfyUI.
+
