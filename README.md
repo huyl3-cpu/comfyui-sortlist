@@ -8,5 +8,6 @@ An upgraded list sort node with multiple modes:
 - `date`         – sort by file modification time  
 - `random`       – shuffle with a deterministic seed  
 
-Put this folder under `ComfyUI/custom_nodes/` and restart ComfyUI.
+`git clone https://github.com/huyl3-cpu/comfyui-sortlist.git` in `path/to/custom_nodes` and restart ComfyUI.
+
 
