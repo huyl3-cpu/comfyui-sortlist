@@ -34,6 +34,12 @@ from .steg_rgb_extract import StegRGBExtract
 from .i2sha import ImageToSHA256
 
 
+# -----------------------------
+# NEW NODE: Workflow Input Setter
+# -----------------------------
+from .workflow_input_setter import WorkflowInputSetter
+
+
 # ============================
 # Register all nodes
 # ============================
@@ -61,6 +67,11 @@ NODE_CLASS_MAPPINGS.update({
     "image_to_sha256": ImageToSHA256,
 })
 
+# Add the NEW Workflow Input Setter Node
+NODE_CLASS_MAPPINGS.update({
+    "workflow_input_setter": WorkflowInputSetter,
+})
+
 
 # ============================
 # Display names mapping
@@ -82,4 +93,7 @@ NODE_DISPLAY_NAME_MAPPINGS.update({
     "steg_rgb_embed": "Steganography: Embed String in Colors (RGB)",
     "steg_rgb_extract": "Steganography: Extract String From Colors (RGB)",
     "image_to_sha256": "Image to SHA256",
+
+    # Display name for new node
+    "workflow_input_setter": "Workflow Input Setter",
 })
