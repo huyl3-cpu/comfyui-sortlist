@@ -1,14 +1,15 @@
 class SetValuesFromPanel:
     """
-    Node lấy 6 giá trị từ Workflow Input Panel và trả ra đúng định dạng:
-    (float, string, string, string, int, int)
+    Node lấy 7 giá trị từ Workflow Input Panel và trả ra đúng định dạng:
+    (int, float, string, string, string, int, int)
     """
 
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
-                "fps": ("FLOAT", {"default": 33.0}),
+                "stt": ("INT", {"default": 1}),
+                "fps": ("FLOAT", {"default": 16.0}),
                 "file_name": ("STRING", {"default": "all.mp4"}),
                 "save_path": ("STRING", {"default": "/content/drive/MyDrive/anime"}),
                 "convert_folder": ("STRING", {"default": "/content/drive/MyDrive/anime"}),
@@ -17,13 +18,13 @@ class SetValuesFromPanel:
             }
         }
 
-    RETURN_TYPES = ("FLOAT", "STRING", "STRING", "STRING", "INT", "INT")
-    RETURN_NAMES = ("fps", "file_name", "save_path", "convert_folder", "width", "height")
+    RETURN_TYPES = ("INT", "FLOAT", "STRING", "STRING", "STRING", "INT", "INT")
+    RETURN_NAMES = ("stt", "fps", "file_name", "save_path", "convert_folder", "width", "height")
     FUNCTION = "execute"
     CATEGORY = "HuyL3/Utilities"
 
-    def execute(self, fps, file_name, save_path, convert_folder, width, height):
-        return (fps, file_name, save_path, convert_folder, width, height)
+    def execute(self, stt, fps, file_name, save_path, convert_folder, width, height):
+        return (stt, fps, file_name, save_path, convert_folder, width, height)
 
 
 NODE_CLASS_MAPPINGS = {
