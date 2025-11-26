@@ -33,11 +33,9 @@ from .steg_rgb_extract import StegRGBExtract
 # NEW NODE: Image to SHA256
 from .i2sha import ImageToSHA256
 
-
-# -----------------------------
-# NEW NODE: Workflow Input Setter
-# -----------------------------
-from .workflow_input_setter import WorkflowInputSetter
+# 🌟 NEW: Set Values From Panel
+from .set_values_from_panel import NODE_CLASS_MAPPINGS as PANEL_NODE_CLASSES
+from .set_values_from_panel import NODE_DISPLAY_NAME_MAPPINGS as PANEL_NODE_NAMES
 
 
 # ============================
@@ -67,10 +65,8 @@ NODE_CLASS_MAPPINGS.update({
     "image_to_sha256": ImageToSHA256,
 })
 
-# Add the NEW Workflow Input Setter Node
-NODE_CLASS_MAPPINGS.update({
-    "workflow_input_setter": WorkflowInputSetter,
-})
+# 🌟 Add NEW SetValuesFromPanel node
+NODE_CLASS_MAPPINGS.update(PANEL_NODE_CLASSES)
 
 
 # ============================
@@ -93,7 +89,7 @@ NODE_DISPLAY_NAME_MAPPINGS.update({
     "steg_rgb_embed": "Steganography: Embed String in Colors (RGB)",
     "steg_rgb_extract": "Steganography: Extract String From Colors (RGB)",
     "image_to_sha256": "Image to SHA256",
-
-    # Display name for new node
-    "workflow_input_setter": "Workflow Input Setter",
 })
+
+# 🌟 Add NEW SetValuesFromPanel display name
+NODE_DISPLAY_NAME_MAPPINGS.update(PANEL_NODE_NAMES)
