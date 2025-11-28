@@ -16,6 +16,12 @@ from .video_nodes import NODE_DISPLAY_NAME_MAPPINGS as VIDEO_NODE_NAMES
 from .video_scene_splitter import NODE_CLASS_MAPPINGS as SPLIT_NODE_CLASSES
 from .video_scene_splitter import NODE_DISPLAY_NAME_MAPPINGS as SPLIT_NODE_NAMES
 
+# -----------------------------
+# NEW: Move File (mv.py)
+# -----------------------------
+from .mv import NODE_CLASS_MAPPINGS as MV_NODE_CLASSES
+from .mv import NODE_DISPLAY_NAME_MAPPINGS as MV_NODE_NAMES
+
 # Filter node
 from .filter_nodes import NODE_CLASS_MAPPINGS as FILTER_NODE_CLASSES
 from .filter_nodes import NODE_DISPLAY_NAME_MAPPINGS as FILTER_NODE_NAMES
@@ -50,6 +56,9 @@ NODE_CLASS_MAPPINGS.update(VIDEO_NODE_CLASSES)
 # Add NEW Video Scene Splitter
 NODE_CLASS_MAPPINGS.update(SPLIT_NODE_CLASSES)
 
+# Add NEW Move File node
+NODE_CLASS_MAPPINGS.update(MV_NODE_CLASSES)
+
 NODE_CLASS_MAPPINGS.update(FILTER_NODE_CLASSES)
 NODE_CLASS_MAPPINGS.update(STEG_ALPHA_EMBED)
 NODE_CLASS_MAPPINGS.update(STEG_ALPHA_EXTRACT)
@@ -80,6 +89,9 @@ NODE_DISPLAY_NAME_MAPPINGS.update(VIDEO_NODE_NAMES)
 
 # Add NEW Video Scene Splitter display name
 NODE_DISPLAY_NAME_MAPPINGS.update(SPLIT_NODE_NAMES)
+
+# Add NEW Move File display name
+NODE_DISPLAY_NAME_MAPPINGS.update(MV_NODE_NAMES)
 
 NODE_DISPLAY_NAME_MAPPINGS.update(FILTER_NODE_NAMES)
 NODE_DISPLAY_NAME_MAPPINGS.update(STEG_ALPHA_EMBED_NAMES)
