@@ -28,6 +28,12 @@ from .mv import NODE_DISPLAY_NAME_MAPPINGS as MV_NODE_NAMES
 from .video_audio_concat import NODE_CLASS_MAPPINGS as VA_CONCAT_CLASSES
 from .video_audio_concat import NODE_DISPLAY_NAME_MAPPINGS as VA_CONCAT_NAMES
 
+# -----------------------------
+# NEW: Video Mute (video_mute.py)
+# -----------------------------
+from .video_mute import NODE_CLASS_MAPPINGS as MUTE_NODE_CLASSES
+from .video_mute import NODE_DISPLAY_NAME_MAPPINGS as MUTE_NODE_NAMES
+
 # Filter node
 from .filter_nodes import NODE_CLASS_MAPPINGS as FILTER_NODE_CLASSES
 from .filter_nodes import NODE_DISPLAY_NAME_MAPPINGS as FILTER_NODE_NAMES
@@ -68,6 +74,9 @@ NODE_CLASS_MAPPINGS.update(MV_NODE_CLASSES)
 # Add NEW Video Audio Concat node
 NODE_CLASS_MAPPINGS.update(VA_CONCAT_CLASSES)
 
+# Add NEW Video Mute node
+NODE_CLASS_MAPPINGS.update(MUTE_NODE_CLASSES)
+
 NODE_CLASS_MAPPINGS.update(FILTER_NODE_CLASSES)
 NODE_CLASS_MAPPINGS.update(STEG_ALPHA_EMBED)
 NODE_CLASS_MAPPINGS.update(STEG_ALPHA_EXTRACT)
@@ -104,6 +113,9 @@ NODE_DISPLAY_NAME_MAPPINGS.update(MV_NODE_NAMES)
 
 # Add NEW Video Audio Concat display name
 NODE_DISPLAY_NAME_MAPPINGS.update(VA_CONCAT_NAMES)
+
+# Add NEW Video Mute display name
+NODE_DISPLAY_NAME_MAPPINGS.update(MUTE_NODE_NAMES)
 
 NODE_DISPLAY_NAME_MAPPINGS.update(FILTER_NODE_NAMES)
 NODE_DISPLAY_NAME_MAPPINGS.update(STEG_ALPHA_EMBED_NAMES)
