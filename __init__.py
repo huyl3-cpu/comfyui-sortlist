@@ -23,6 +23,12 @@ from .mv import NODE_CLASS_MAPPINGS as MV_NODE_CLASSES
 from .mv import NODE_DISPLAY_NAME_MAPPINGS as MV_NODE_NAMES
 
 # -----------------------------
+# NEW: Rename File (rename_file.py)
+# -----------------------------
+from .rename_file import NODE_CLASS_MAPPINGS as RENAME_NODE_CLASSES
+from .rename_file import NODE_DISPLAY_NAME_MAPPINGS as RENAME_NODE_NAMES
+
+# -----------------------------
 # NEW: Video Audio Concat (video_audio_concat.py)
 # -----------------------------
 from .video_audio_concat import NODE_CLASS_MAPPINGS as VA_CONCAT_CLASSES
@@ -71,6 +77,9 @@ NODE_CLASS_MAPPINGS.update(SPLIT_NODE_CLASSES)
 # Add NEW Move File node
 NODE_CLASS_MAPPINGS.update(MV_NODE_CLASSES)
 
+# ✅ Add NEW Rename File node
+NODE_CLASS_MAPPINGS.update(RENAME_NODE_CLASSES)
+
 # Add NEW Video Audio Concat node
 NODE_CLASS_MAPPINGS.update(VA_CONCAT_CLASSES)
 
@@ -110,6 +119,9 @@ NODE_DISPLAY_NAME_MAPPINGS.update(SPLIT_NODE_NAMES)
 
 # Add NEW Move File display name
 NODE_DISPLAY_NAME_MAPPINGS.update(MV_NODE_NAMES)
+
+# ✅ Add NEW Rename File display name
+NODE_DISPLAY_NAME_MAPPINGS.update(RENAME_NODE_NAMES)
 
 # Add NEW Video Audio Concat display name
 NODE_DISPLAY_NAME_MAPPINGS.update(VA_CONCAT_NAMES)
