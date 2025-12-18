@@ -31,7 +31,6 @@ from .steg_alpha_extract import NODE_CLASS_MAPPINGS as STEG_ALPHA_EXTRACT
 from .steg_alpha_embed import NODE_DISPLAY_NAME_MAPPINGS as STEG_ALPHA_EMBED_NAMES
 from .steg_alpha_extract import NODE_DISPLAY_NAME_MAPPINGS as STEG_ALPHA_EXTRACT_NAMES
 
-from .steg_rgb_embed import StegRGBEmbed
 from .steg_rgb_extract import StegRGBExtract
 
 from .i2sha import ImageToSHA256
@@ -53,7 +52,6 @@ NODE_CLASS_MAPPINGS.update(STEG_ALPHA_EMBED)
 NODE_CLASS_MAPPINGS.update(STEG_ALPHA_EXTRACT)
 
 NODE_CLASS_MAPPINGS.update({
-    "steg_rgb_embed": StegRGBEmbed,
     "steg_rgb_extract": StegRGBExtract,
     "image_to_sha256": ImageToSHA256,
 })
@@ -74,7 +72,6 @@ NODE_DISPLAY_NAME_MAPPINGS.update(STEG_ALPHA_EMBED_NAMES)
 NODE_DISPLAY_NAME_MAPPINGS.update(STEG_ALPHA_EXTRACT_NAMES)
 
 NODE_DISPLAY_NAME_MAPPINGS.update({
-    "steg_rgb_embed": "Steganography: Embed String in Colors (RGB)",
     "steg_rgb_extract": "Steganography: Extract String From Colors (RGB)",
     "image_to_sha256": "Image to SHA256",
 })
