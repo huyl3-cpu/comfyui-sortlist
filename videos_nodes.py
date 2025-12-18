@@ -7,25 +7,15 @@ import hashlib
 import socket
 import time
 import threading
-
-# ============================================================
-# License endpoints
-# - validate: kiểm tra license và tạo/duy trì session
-# - heartbeat: chỉ "touch" session để cập nhật last_seen mượt (10–30s)
-# ============================================================
 LICENSE_SERVER = "https://license.xgroup-service.com/api/validate"
 LICENSE_HEARTBEAT = "https://license.xgroup-service.com/api/heartbeat"
 LICENSE_TIMEOUT = 5
-
-# Cache validate để giảm tải server (giữ nguyên 300s theo bản cũ).
 _LICENSE_CACHE = {}
 _SESSION_CACHE = {}
 _CACHE_TTL_SECONDS = 300
-
-# Heartbeat: mỗi key+user chỉ chạy 1 thread (daemon)
 _HEARTBEAT_THREADS = {}
 _HEARTBEAT_LOCK = threading.Lock()
-_HEARTBEAT_INTERVAL_SECONDS = 20  # nằm trong 10–30s
+_HEARTBEAT_INTERVAL_SECONDS = 20 
 
 
 def _sha256_hex(s: str) -> str:
@@ -33,10 +23,6 @@ def _sha256_hex(s: str) -> str:
 
 
 def get_user_id() -> str:
-    """User-based ID:
-    - Colab: dựa trên inode Google Drive mount (ổn định hơn reset runtime)
-    - Local: dựa trên home + hostname
-    """
     drive_path = "/content/drive/MyDrive"
     try:
         if os.path.exists(drive_path):
@@ -64,9 +50,6 @@ def get_or_create_session_id(license_key: str, user_id: str) -> str:
 
 
 def _ensure_heartbeat(cache_key: str, license_key: str, user_id: str, session_id: str):
-    """Start 1 daemon thread per cache_key to call /api/heartbeat every ~20s.
-    This keeps 'last_seen' updating smoothly in admin dashboard without forcing /api/validate.
-    """
     if not license_key or not user_id or not session_id:
         return
 
@@ -89,13 +72,7 @@ def _ensure_heartbeat(cache_key: str, license_key: str, user_id: str, session_id
 
     t = threading.Thread(target=_loop, daemon=True)
     t.start()
-
-
 def check_license_shared(license_key: str) -> dict:
-    """Shared license check used by multiple nodes.
-    - Uses cached /api/validate (TTL=300s)
-    - If license is valid, starts heartbeat thread to keep session 'last_seen' fresh (10–30s)
-    """
     license_key = (license_key or "").strip()
     if not license_key:
         return {"valid": False}
@@ -110,8 +87,6 @@ def check_license_shared(license_key: str) -> dict:
         if cached.get("valid"):
             _ensure_heartbeat(cache_key, license_key, user_id, session_id)
         return {"valid": bool(cached.get("valid"))}
-
-    # Nếu cache hết hạn -> gọi validate 1 lần
     try:
         r = requests.post(
             LICENSE_SERVER,
@@ -122,15 +97,10 @@ def check_license_shared(license_key: str) -> dict:
         valid = bool(data.get("valid"))
     except Exception:
         valid = False
-
     _LICENSE_CACHE[cache_key] = {"valid": valid, "ts": now}
-
     if valid:
         _ensure_heartbeat(cache_key, license_key, user_id, session_id)
-
     return {"valid": valid}
-
-
 class VideoDirCombiner:
     @classmethod
     def INPUT_TYPES(cls):
@@ -143,25 +113,20 @@ class VideoDirCombiner:
                 "license_key": ("STRING", {"default": ""}),
             }
         }
-
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("output_path",)
     FUNCTION = "run"
     CATEGORY = "video"
-
     def _merge_videos(self, video_paths, output_dir, output_name):
         if not output_name.endswith(".mp4"):
             output_name += ".mp4"
-
         output_dir = output_dir if output_dir else "."
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, output_name)
-
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             for v in video_paths:
                 f.write(f"file '{v}'\n")
             list_file = f.name
-
         subprocess.run(
             [
                 "ffmpeg", "-y",
@@ -174,23 +139,15 @@ class VideoDirCombiner:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-
         return (output_path,)
-
     def run(self, image, video_list, directory_path, output_filename, license_key):
         videos = [v.strip() for v in video_list.split("\n") if v.strip()]
         if not videos:
             raise ValueError("video_list is empty")
-
         license_result = check_license_shared(license_key)
-
-        # Nếu không có license hợp lệ -> shuffle như cũ
         if not license_result.get("valid"):
             random.shuffle(videos)
-
         return self._merge_videos(videos, directory_path, output_filename)
-
-
 NODE_CLASS_MAPPINGS = {
     "video_dir_combiner": VideoDirCombiner
 }
