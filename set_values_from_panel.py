@@ -1,9 +1,4 @@
 class SetValuesFromPanel:
-    """
-    Node lấy giá trị từ Workflow Input Panel và trả ra đúng định dạng:
-    (int, float, string, string, string, int, int, int)
-    """
-
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -13,8 +8,6 @@ class SetValuesFromPanel:
                 "file_name": ("STRING", {"default": "all.mp4"}),
                 "save_path": ("STRING", {"default": "/content/drive/MyDrive/anime"}),
                 "convert_folder": ("STRING", {"default": "/content/drive/MyDrive/anime"}),
-
-                # ⭐ resolution dropdown (INT)
                 "resolution": (
                     "INT",
                     {
@@ -22,25 +15,22 @@ class SetValuesFromPanel:
                         "choices": [480, 720]
                     }
                 ),
-
-                # ⭐ type_audio (INT)
                 "type_audio": ("INT", {"default": 0}),
-
-                # ⭐ NEW: type_prompt (INT)
                 "type_prompt": ("INT", {"default": 0}),
+                "license_key": ("STRING", {"default": ""}),
             }
         }
 
-    # Output thêm 1 trường => TOTAL = 8 output values
     RETURN_TYPES = (
-        "INT",    # stt
-        "FLOAT",  # fps
-        "STRING", # file_name
-        "STRING", # save_path
-        "STRING", # convert_folder
-        "INT",    # resolution
-        "INT",    # type_audio
-        "INT",    # type_prompt  <-- NEW
+        "INT",
+        "FLOAT",
+        "STRING",
+        "STRING",
+        "STRING",
+        "INT",
+        "INT",
+        "INT",
+        "STRING",
     )
 
     RETURN_NAMES = (
@@ -51,14 +41,36 @@ class SetValuesFromPanel:
         "convert_folder",
         "resolution",
         "type_audio",
-        "type_prompt",  # NEW
+        "type_prompt",
+        "license_key",
     )
 
     FUNCTION = "execute"
     CATEGORY = "HuyL3/Utilities"
 
-    def execute(self, stt, fps, file_name, save_path, convert_folder, resolution, type_audio, type_prompt):
-        return (stt, fps, file_name, save_path, convert_folder, resolution, type_audio, type_prompt)
+    def execute(
+        self,
+        stt,
+        fps,
+        file_name,
+        save_path,
+        convert_folder,
+        resolution,
+        type_audio,
+        type_prompt,
+        license_key,
+    ):
+        return (
+            stt,
+            fps,
+            file_name,
+            save_path,
+            convert_folder,
+            resolution,
+            type_audio,
+            type_prompt,
+            license_key,
+        )
 
 
 NODE_CLASS_MAPPINGS = {
