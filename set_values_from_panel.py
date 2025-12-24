@@ -3,21 +3,47 @@ class SetValuesFromPanel:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "stt": ("INT", {"default": 1}),
-                "fps": ("FLOAT", {"default": 16.0}),
-                "file_name": ("STRING", {"default": "all.mp4"}),
-                "save_path": ("STRING", {"default": "/content/drive/MyDrive/anime"}),
-                "convert_folder": ("STRING", {"default": "/content/drive/MyDrive/anime"}),
-                "resolution": (
-                    "INT",
-                    {
-                        "default": 720,
-                        "choices": [480, 720]
-                    }
-                ),
-                "type_audio": ("INT", {"default": 0}),
-                "type_prompt": ("INT", {"default": 0}),
-                "license_key": ("STRING", {"default": ""}),
+                "stt": ("INT", {
+                    "default": 1,
+                    "label": "STT",
+                    "display_name": "STT",
+                }),
+
+                "fps": ("FLOAT", {
+                    "default": 16.0,
+                    "label": "FPS",
+                    "display_name": "FPS",
+                }),
+
+                "file_name": ("STRING", {
+                    "default": "all.mp4",
+                    "label": "Tên file cần lưu",
+                    "display_name": "Tên file cần lưu",
+                }),
+
+                "save_path": ("STRING", {
+                    "default": "/content/drive/MyDrive/anime",
+                    "label": "Đường dẫn thư mục lưu",
+                    "display_name": "Đường dẫn thư mục lưu",
+                }),
+
+                "convert_folder": ("STRING", {
+                    "default": "/content/drive/MyDrive/anime",
+                    "label": "Đường dẫn thư mục chuyển đổi",
+                    "display_name": "Đường dẫn thư mục chuyển đổi",
+                }),
+
+                "type_audio": ("INT", {
+                    "default": 0,
+                    "label": "Kiểu âm thanh",
+                    "display_name": "Kiểu âm thanh",
+                }),
+
+                "license_key": ("STRING", {
+                    "default": "",
+                    "label": "License_key",
+                    "display_name": "License_key",
+                }),
             }
         }
 
@@ -28,8 +54,6 @@ class SetValuesFromPanel:
         "STRING",
         "STRING",
         "INT",
-        "INT",
-        "INT",
         "STRING",
     )
 
@@ -39,9 +63,7 @@ class SetValuesFromPanel:
         "file_name",
         "save_path",
         "convert_folder",
-        "resolution",
         "type_audio",
-        "type_prompt",
         "license_key",
     )
 
@@ -55,9 +77,7 @@ class SetValuesFromPanel:
         file_name,
         save_path,
         convert_folder,
-        resolution,
         type_audio,
-        type_prompt,
         license_key,
     ):
         return (
@@ -66,9 +86,7 @@ class SetValuesFromPanel:
             file_name,
             save_path,
             convert_folder,
-            resolution,
             type_audio,
-            type_prompt,
             license_key,
         )
 

@@ -56,3 +56,14 @@ try:
 except Exception as e:
     print(f"[comfyui-sortlist] Skipped 'i2sha' due to import error: {e}")
 _safe_merge("set_values_from_panel")
+
+from .video_frame_guard import VHS_VideoFrameGuard, VHS_VideoPickMinFrames
+NODE_CLASS_MAPPINGS.update({
+    "VHS_VideoFrameGuard": VHS_VideoFrameGuard,
+    "VHS_VideoPickMinFrames": VHS_VideoPickMinFrames,
+})
+
+NODE_DISPLAY_NAME_MAPPINGS.update({
+    "VHS_VideoFrameGuard": "Video Frame Guard (<=210 frames)",
+    "VHS_VideoPickMinFrames": "Pick Video With Min Frames",
+})
