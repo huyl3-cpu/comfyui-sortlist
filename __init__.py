@@ -49,7 +49,6 @@ except Exception as e:
 
 _safe_merge("set_values_from_panel")
 
-# giữ nguyên phần video_frame_guard (bọc try để không làm chết toàn bộ package)
 try:
     from .video_frame_guard import VHS_VideoFrameGuard, VHS_VideoPickMinFrames
     NODE_CLASS_MAPPINGS.update({
@@ -63,5 +62,9 @@ try:
 except Exception as e:
     print(f"[comfyui-sortlist] Skipped 'video_frame_guard' due to import error: {e}")
 
-# QUAN TRỌNG: import value CUỐI để override node Set Value
 _safe_merge("value")
+from .set_value_with_path import NODE_CLASS_MAPPINGS as _m, NODE_DISPLAY_NAME_MAPPINGS as _n
+NODE_CLASS_MAPPINGS.update(_m)
+NODE_DISPLAY_NAME_MAPPINGS.update(_n)
+
+

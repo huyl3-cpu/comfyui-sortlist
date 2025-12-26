@@ -1,11 +1,4 @@
 import { app } from "../../scripts/app.js";
-
-/**
- * UI-only extension for "Set Value"
- * - KHÔNG rewrite prompt
- * - KHÔNG patch queuePrompt/fetch
- * - Không còn mask_text
- */
 app.registerExtension({
   name: "vf9.SetValue.uiOnly",
 

@@ -47,7 +47,7 @@ class VF9_SetValue:
         face=None,
         mask=None,
     ):
-        # batch inference
+    
         batch = 1
         if isinstance(background, torch.Tensor) and background.ndim == 4:
             batch = int(background.shape[0])
@@ -62,7 +62,7 @@ class VF9_SetValue:
         def fb_mask():
             return _white_mask(batch, 512, 512)
 
-        # check license (fail-closed)
+
         try:
             res = check_license_shared(license_key)
             valid = (res.get("valid") is True)
@@ -75,7 +75,6 @@ class VF9_SetValue:
             out_mask = mask if (enable_mask and mask is not None) else fb_mask()
             return (out_bg, out_face, out_mask)
 
-        # INVALID -> phá theo enable
         if enable_background:
             h, w = _rand_hw()
             out_bg = _black_image(batch, h, w)
