@@ -1,3 +1,5 @@
+WEB_DIRECTORY = "."
+
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
@@ -55,6 +57,7 @@ try:
     })
 except Exception as e:
     print(f"[comfyui-sortlist] Skipped 'i2sha' due to import error: {e}")
+<<<<<<< HEAD
 _safe_merge("set_values_from_panel")
 
 from .video_frame_guard import VHS_VideoFrameGuard, VHS_VideoPickMinFrames
@@ -67,3 +70,8 @@ NODE_DISPLAY_NAME_MAPPINGS.update({
     "VHS_VideoFrameGuard": "Video Frame Guard (<=210 frames)",
     "VHS_VideoPickMinFrames": "Pick Video With Min Frames",
 })
+=======
+
+# ✅ Import node Set Value (value.py)
+_safe_merge("value")
+>>>>>>> 269ae1b (Update comfyui-sortlist)
