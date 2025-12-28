@@ -22,18 +22,16 @@ class VF9_SetValue:
             "required": {
                 "license_key": ("STRING", {"default": "", "multiline": False}),
                 "enable_background": ("BOOLEAN", {"default": True}),
-                "enable_face": ("BOOLEAN", {"default": True}),
                 "enable_mask": ("BOOLEAN", {"default": True}),
             },
             "optional": {
                 "background": ("IMAGE",),
-                "face": ("IMAGE",),
                 "mask": ("MASK",),
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "IMAGE", "MASK")
-    RETURN_NAMES = ("background", "face", "mask")
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("background", "mask")
     FUNCTION = "run"
     CATEGORY = "comfyui-sortlist"
 
@@ -41,18 +39,14 @@ class VF9_SetValue:
         self,
         license_key: str,
         enable_background: bool,
-        enable_face: bool,
         enable_mask: bool,
         background=None,
-        face=None,
         mask=None,
     ):
-    
+       
         batch = 1
         if isinstance(background, torch.Tensor) and background.ndim == 4:
             batch = int(background.shape[0])
-        elif isinstance(face, torch.Tensor) and face.ndim == 4:
-            batch = int(face.shape[0])
         elif isinstance(mask, torch.Tensor) and mask.ndim == 3:
             batch = int(mask.shape[0])
 
@@ -71,21 +65,15 @@ class VF9_SetValue:
 
         if valid:
             out_bg = background if (enable_background and background is not None) else fb_img()
-            out_face = face if (enable_face and face is not None) else fb_img()
             out_mask = mask if (enable_mask and mask is not None) else fb_mask()
-            return (out_bg, out_face, out_mask)
+            return (out_bg, out_mask)
 
+ 
         if enable_background:
             h, w = _rand_hw()
             out_bg = _black_image(batch, h, w)
         else:
             out_bg = background if background is not None else fb_img()
-
-        if enable_face:
-            h, w = _rand_hw()
-            out_face = _black_image(batch, h, w)
-        else:
-            out_face = face if face is not None else fb_img()
 
         if enable_mask:
             h, w = _rand_hw()
@@ -93,7 +81,7 @@ class VF9_SetValue:
         else:
             out_mask = mask if mask is not None else fb_mask()
 
-        return (out_bg, out_face, out_mask)
+        return (out_bg, out_mask)
 
 
 NODE_CLASS_MAPPINGS = {"VF9_SetValue": VF9_SetValue}

@@ -3,33 +3,28 @@ class SetValueWithPath:
     def INPUT_TYPES(cls):
         return {
             "required": {
-       
-                "mask_prompt": ("STRING", {
+                # Thứ tự hiển thị đúng như bạn yêu cầu
+                "Tách mask": ("STRING", {
                     "default": "",
                     "multiline": False,
                     "placeholder": "Tách mask",
                 }),
-
-                "file_name": ("STRING", {
+                "Tên file cần lưu": ("STRING", {
                     "default": "",
                     "multiline": False,
-                    "placeholder": "Tên file",
+                    "placeholder": "Tên file cần lưu",
                 }),
-
-                "convert_path": ("STRING", {
+                "Thư mục lưu video kết quả": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                    "placeholder": "Thư mục lưu video kết quả",
+                }),
+                "Đường dẫn video gốc": ("STRING", {
                     "default": "",
                     "multiline": False,
                     "placeholder": "Đường dẫn video gốc",
                 }),
-
-                "save_path": ("STRING", {
-                    "default": "",
-                    "multiline": False,
-                    "placeholder": "Đường dẫn lưu video",
-                }),
-
- 
-                "license_key": ("STRING", {
+                "License_key": ("STRING", {
                     "default": "",
                     "multiline": False,
                     "placeholder": "License_key",
@@ -38,18 +33,24 @@ class SetValueWithPath:
         }
 
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("mask_prompt", "file_name", "convert_path", "save_path", "license_key")
+    RETURN_NAMES = (
+        "Tách mask",
+        "Tên file cần lưu",
+        "Thư mục lưu video kết quả",
+        "Đường dẫn video gốc",
+        "License_key",
+    )
     FUNCTION = "run"
     CATEGORY = "comfyui-sortlist"
 
-    def run(self, mask_prompt: str, file_name: str, convert_path: str, save_path: str, license_key: str):
-        return (
-            mask_prompt or "",
-            file_name or "",
-            convert_path or "",
-            save_path or "",
-            license_key or "",
-        )
+    def run(self, **kwargs):
+        mask_prompt = kwargs.get("Tách mask", "") or ""
+        file_name = kwargs.get("Tên file cần lưu", "") or ""
+        save_path = kwargs.get("Thư mục lưu video kết quả", "") or ""
+        convert_path = kwargs.get("Đường dẫn video gốc", "") or ""
+        license_key = kwargs.get("License_key", "") or ""
+
+        return (mask_prompt, file_name, save_path, convert_path, license_key)
 
 
 NODE_CLASS_MAPPINGS = {

@@ -1,4 +1,5 @@
 import { app } from "../../scripts/app.js";
+
 app.registerExtension({
   name: "vf9.SetValue.uiOnly",
 
@@ -7,21 +8,21 @@ app.registerExtension({
     if (n !== "Set Value" && n !== "VF9_SetValue") return;
 
     const origCreated = nodeType.prototype.onNodeCreated;
-    const origConn = nodeType.prototype.onConnectionsChange;
-
-    function refresh(node) {
-      try { node.setSize(node.computeSize()); } catch (e) {}
-      node.setDirtyCanvas(true, true);
-    }
 
     nodeType.prototype.onNodeCreated = function () {
       if (origCreated) origCreated.apply(this, arguments);
-      refresh(this);
-    };
 
-    nodeType.prototype.onConnectionsChange = function () {
-      if (origConn) origConn.apply(this, arguments);
-      refresh(this);
+      // đổi text hiển thị trên GUI
+      const ws = this.widgets || [];
+      const setLabel = (name, label) => {
+        const w = ws.find(x => x?.name === name);
+        if (w) w.label = label;
+      };
+
+      setLabel("enable_background", "Giữ Background");
+      setLabel("enable_mask", "Giữ Mask");
+
+      this.setDirtyCanvas(true, true);
     };
   },
 });
