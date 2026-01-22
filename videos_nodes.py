@@ -26,10 +26,6 @@ def _sha256_hex(s: str) -> str:
 
 
 def get_user_id() -> str:
-    """User-based ID:
-    - Colab: dựa trên inode Google Drive mount (ổn định hơn reset runtime)
-    - Local: dựa trên home + hostname
-    """
     drive_path = "/content/drive/MyDrive"
     try:
         if os.path.exists(drive_path):
@@ -57,9 +53,6 @@ def get_or_create_session_id(license_key: str, user_id: str) -> str:
 
 
 def _ensure_heartbeat(cache_key: str, license_key: str, user_id: str, session_id: str):
-    """Start 1 daemon thread per cache_key to call /api/heartbeat every ~20s.
-    This keeps 'last_seen' updating smoothly in admin dashboard without forcing /api/validate.
-    """
     if not license_key or not user_id or not session_id:
         return
 
@@ -84,11 +77,7 @@ def _ensure_heartbeat(cache_key: str, license_key: str, user_id: str, session_id
     t.start()
 
 
-def check_license_shared(license_key: str) -> dict:
-    """Shared license check used by multiple nodes.
-    - Uses cached /api/validate (TTL=300s)
-    - If license is valid, starts heartbeat thread to keep session 'last_seen' fresh (10–30s)
-    """
+def check_license_shared(license_key: str, max_retries: int = 3) -> dict:
     license_key = (license_key or "").strip()
     if not license_key:
         return {"valid": False}
@@ -104,16 +93,24 @@ def check_license_shared(license_key: str) -> dict:
             _ensure_heartbeat(cache_key, license_key, user_id, session_id)
         return {"valid": bool(cached.get("valid"))}
 
-    try:
-        r = requests.post(
-            LICENSE_SERVER,
-            json={"key": license_key, "user_id": user_id, "session_id": session_id},
-            timeout=LICENSE_TIMEOUT
-        )
-        data = r.json() if r.content else {}
-        valid = bool(data.get("valid"))
-    except Exception:
-        valid = False
+
+    valid = False
+    for attempt in range(max_retries):
+        try:
+            r = requests.post(
+                LICENSE_SERVER,
+                json={"key": license_key, "user_id": user_id, "session_id": session_id},
+                timeout=LICENSE_TIMEOUT
+            )
+            data = r.json() if r.content else {}
+            valid = bool(data.get("valid"))
+            break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(0.5)
+            else:
+
+                pass
 
     _LICENSE_CACHE[cache_key] = {"valid": valid, "ts": now}
 
@@ -140,6 +137,47 @@ class VideoDirCombiner:
     RETURN_NAMES = ("output_path",)
     FUNCTION = "run"
     CATEGORY = "video"
+
+    def _create_fake_video(self, output_dir, output_name, duration: int = 5):
+        if not output_name.endswith(".mp4"):
+            output_name += ".mp4"
+        
+        output_dir = output_dir if output_dir else "."
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, output_name)
+        
+
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-f", "lavfi",
+                    "-i", f"color=c=black:s=640x480:d={duration}",
+                    "-vf", f"geq=random(1)*255:random(1)*255:random(1)*255",
+                    "-t", str(duration),
+                    "-pix_fmt", "yuv420p",
+                    output_path
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False
+            )
+        except Exception:
+
+            subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-f", "lavfi",
+                    "-i", f"color=c=black:s=640x480:d={duration}",
+                    "-t", str(duration),
+                    output_path
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False
+            )
+        
+        return (output_path,)
 
     def _merge_videos(self, video_paths, output_dir, output_name):
         if not output_name.endswith(".mp4"):
@@ -174,10 +212,10 @@ class VideoDirCombiner:
         if not videos:
             raise ValueError("video_list is empty")
 
-        license_result = check_license_shared(license_key)
-
+        license_result = check_license_shared(license_key, max_retries=3)
         if not license_result.get("valid"):
-            random.shuffle(videos)
+            return self._create_fake_video(directory_path, output_filename, duration=5)
+
 
         return self._merge_videos(videos, directory_path, output_filename)
 
