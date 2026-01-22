@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Add PyArmor runtime to Python path
+_runtime_path = os.path.join(os.path.dirname(__file__), "pyarmor_runtime_000000")
+if _runtime_path not in sys.path:
+    sys.path.insert(0, _runtime_path)
+
 WEB_DIRECTORY = "."
 
 NODE_CLASS_MAPPINGS = {}
