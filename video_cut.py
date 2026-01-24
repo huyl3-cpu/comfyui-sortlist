@@ -17,8 +17,8 @@ class VideoCutToSegments:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("videos_list",)
+    RETURN_TYPES = ("STRING", "STRING",)
+    RETURN_NAMES = ("videos_list", "output_directory",)
     FUNCTION = "cut_video"
     CATEGORY = "video"
 
@@ -160,15 +160,15 @@ class VideoCutToSegments:
         
         if errors:
             error_msg = "\n".join(errors)
-            return (f"ERROR: Some segments failed:\n{error_msg}",)
+            return (f"ERROR: Some segments failed:\n{error_msg}", "")
         
-        # Trả về danh sách các đường dẫn, ngăn cách bởi dấu phẩy
-        videos_list_str = ",".join(cut_videos)
+        # Trả về danh sách các đường dẫn, mỗi dòng một video
+        videos_list_str = "\n".join(cut_videos)
         
         print(f"✓ Successfully cut video into {num_segments} segments")
         print(f"Output directory: {output_dir}")
         
-        return (videos_list_str,)
+        return (videos_list_str, output_dir)
 
 
 NODE_CLASS_MAPPINGS = {
