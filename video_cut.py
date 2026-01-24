@@ -1,6 +1,7 @@
 import os
 import subprocess
 import math
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class VideoCutToSegments:
     @classmethod
@@ -10,6 +11,9 @@ class VideoCutToSegments:
                 "video_url": ("STRING", {"default": ""}),
                 "segment_duration": ("INT", {"default": 8, "min": 1, "max": 3600}),
                 "output_prefix": ("STRING", {"default": "a"}),
+                "use_gpu": ("BOOLEAN", {"default": True}),
+                "fast_mode": ("BOOLEAN", {"default": False}),
+                "parallel_workers": ("INT", {"default": 4, "min": 1, "max": 16}),
             }
         }
 
@@ -18,7 +22,64 @@ class VideoCutToSegments:
     FUNCTION = "cut_video"
     CATEGORY = "video"
 
-    def cut_video(self, video_url, segment_duration, output_prefix):
+    def _cut_single_segment(self, args):
+        """Cắt một segment duy nhất (để dùng với parallel processing)"""
+        video_url, start_time, duration, output_path, use_gpu, fast_mode = args
+        
+        if fast_mode:
+            # Fast mode: copy codec, không re-encode (rất nhanh nhưng cắt tại keyframe)
+            cmd = [
+                "ffmpeg",
+                "-y",
+                "-ss", str(start_time),
+                "-i", video_url,
+                "-t", str(duration),
+                "-c", "copy",
+                "-avoid_negative_ts", "1",
+                output_path
+            ]
+        elif use_gpu:
+            # GPU mode: sử dụng NVENC (NVIDIA T4)
+            cmd = [
+                "ffmpeg",
+                "-y",
+                "-hwaccel", "cuda",
+                "-hwaccel_output_format", "cuda",
+                "-i", video_url,
+                "-ss", str(start_time),
+                "-t", str(duration),
+                "-c:v", "h264_nvenc",
+                "-preset", "p4",  # p1=fastest, p7=slowest (p4=balanced)
+                "-b:v", "5M",
+                "-c:a", "aac",
+                "-b:a", "128k",
+                "-avoid_negative_ts", "1",
+                output_path
+            ]
+        else:
+            # CPU mode: libx264 với multi-threading
+            cmd = [
+                "ffmpeg",
+                "-y",
+                "-i", video_url,
+                "-ss", str(start_time),
+                "-t", str(duration),
+                "-c:v", "libx264",
+                "-preset", "fast",
+                "-threads", "8",
+                "-c:a", "aac",
+                "-b:a", "128k",
+                "-avoid_negative_ts", "1",
+                output_path
+            ]
+        
+        try:
+            subprocess.run(cmd, capture_output=True, check=True)
+            return output_path, None
+        except subprocess.CalledProcessError as e:
+            return None, str(e)
+
+    def cut_video(self, video_url, segment_duration, output_prefix, use_gpu, fast_mode, parallel_workers):
         video_url = video_url.strip()
         
         # Kiểm tra file video có tồn tại không
@@ -52,40 +113,59 @@ class VideoCutToSegments:
         # Tính số lượng segment
         num_segments = math.ceil(total_duration / segment_duration)
         
-        # Danh sách các video đã cắt
-        cut_videos = []
-        
-        # Cắt video thành các segment
+        # Chuẩn bị danh sách tasks cho parallel processing
+        tasks = []
         for i in range(num_segments):
             start_time = i * segment_duration
             output_filename = f"{output_prefix}-{i+1}.mp4"
             output_path = os.path.join(output_dir, output_filename)
             
-            # FFmpeg command để cắt video
-            cut_cmd = [
-                "ffmpeg",
-                "-y",  # Ghi đè file nếu đã tồn tại
-                "-i", video_url,
-                "-ss", str(start_time),
-                "-t", str(segment_duration),
-                "-c:v", "libx264",
-                "-c:a", "aac",
-                "-avoid_negative_ts", "1",
-                output_path
-            ]
-            
-            try:
-                subprocess.run(cut_cmd, capture_output=True, check=True)
-                cut_videos.append(output_path)
-                print(f"Created segment {i+1}/{num_segments}: {output_filename}")
-            except subprocess.CalledProcessError as e:
-                return (f"ERROR: Failed to cut segment {i+1} → {str(e)}",)
+            tasks.append((
+                video_url,
+                start_time,
+                segment_duration,
+                output_path,
+                use_gpu,
+                fast_mode
+            ))
         
-        # Sắp xếp danh sách video theo thứ tự (đã được tạo theo thứ tự rồi)
+        # Xử lý song song với ThreadPoolExecutor
+        cut_videos = []
+        errors = []
+        
+        print(f"Starting to cut video into {num_segments} segments using {parallel_workers} workers...")
+        print(f"Mode: {'Fast (copy)' if fast_mode else 'GPU (NVENC)' if use_gpu else 'CPU (libx264)'}")
+        
+        with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
+            # Submit all tasks
+            future_to_segment = {executor.submit(self._cut_single_segment, task): i+1 
+                                for i, task in enumerate(tasks)}
+            
+            # Collect results as they complete
+            for future in as_completed(future_to_segment):
+                segment_num = future_to_segment[future]
+                try:
+                    output_path, error = future.result()
+                    if error:
+                        errors.append(f"Segment {segment_num}: {error}")
+                    else:
+                        cut_videos.append((segment_num, output_path))
+                        print(f"✓ Completed segment {segment_num}/{num_segments}")
+                except Exception as exc:
+                    errors.append(f"Segment {segment_num}: {exc}")
+        
+        # Sắp xếp theo thứ tự segment
+        cut_videos.sort(key=lambda x: x[0])
+        cut_videos = [path for _, path in cut_videos]
+        
+        if errors:
+            error_msg = "\n".join(errors)
+            return (f"ERROR: Some segments failed:\n{error_msg}",)
+        
         # Trả về danh sách các đường dẫn, ngăn cách bởi dấu phẩy
         videos_list_str = ",".join(cut_videos)
         
-        print(f"Successfully cut video into {num_segments} segments")
+        print(f"✓ Successfully cut video into {num_segments} segments")
         print(f"Output directory: {output_dir}")
         
         return (videos_list_str,)
