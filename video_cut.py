@@ -1,7 +1,7 @@
 import os
 import subprocess
 import math
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 class VideoCutToSegments:
     @classmethod
@@ -12,7 +12,7 @@ class VideoCutToSegments:
                 "segment_duration": ("INT", {"default": 8, "min": 1, "max": 3600}),
                 "output_prefix": ("STRING", {"default": "a"}),
                 "use_gpu": ("BOOLEAN", {"default": True}),
-                "fast_mode": ("BOOLEAN", {"default": False}),
+                "accurate_cut": ("BOOLEAN", {"default": True}),
                 "parallel_workers": ("INT", {"default": 4, "min": 1, "max": 16}),
             }
         }
@@ -22,51 +22,49 @@ class VideoCutToSegments:
     FUNCTION = "cut_video"
     CATEGORY = "video"
 
-    def _cut_single_segment(self, args):
-        """Cắt một segment duy nhất (để dùng với parallel processing)"""
-        video_url, start_time, duration, output_path, use_gpu, fast_mode = args
+    @staticmethod
+    def _cut_single_segment(args):
+        """Cắt một segment duy nhất (static method để dùng với ProcessPoolExecutor)"""
+        video_url, start_time, duration, output_path, use_gpu, accurate_cut = args
         
-        if fast_mode:
-            # Fast mode: copy codec, không re-encode (rất nhanh nhưng cắt tại keyframe)
-            cmd = [
-                "ffmpeg",
-                "-y",
-                "-ss", str(start_time),
-                "-i", video_url,
-                "-t", str(duration),
-                "-c", "copy",
-                "-avoid_negative_ts", "1",
-                output_path
-            ]
-        elif use_gpu:
-            # GPU mode: sử dụng NVENC (NVIDIA T4)
+        if use_gpu:
+            # GPU mode: NVENC với tối ưu tốc độ tối đa
             cmd = [
                 "ffmpeg",
                 "-y",
                 "-hwaccel", "cuda",
                 "-hwaccel_output_format", "cuda",
+                "-ss", str(start_time),  # -ss trước -i để seek nhanh hơn
+                "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-ss", str(start_time),
-                "-t", str(duration),
+                "-t", str(duration),  # Đảm bảo đúng duration
                 "-c:v", "h264_nvenc",
-                "-preset", "p4",  # p1=fastest, p7=slowest (p4=balanced)
-                "-b:v", "5M",
+                "-preset", "p1",  # p1 = fastest (tối ưu tốc độ)
+                "-tune", "hq",  # High quality tune
+                "-rc", "vbr",  # Variable bitrate
+                "-cq", "23",  # Quality level
+                "-b:v", "0",  # Let VBR decide
+                "-maxrate", "10M",
+                "-bufsize", "20M",  # Tăng buffer size
                 "-c:a", "aac",
                 "-b:a", "128k",
                 "-avoid_negative_ts", "1",
+                "-max_muxing_queue_size", "9999",  # Tránh queue overflow
                 output_path
             ]
         else:
-            # CPU mode: libx264 với multi-threading
+            # CPU mode: libx264 tối ưu
             cmd = [
                 "ffmpeg",
                 "-y",
+                "-ss", str(start_time),  # -ss trước -i để seek nhanh
+                "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-ss", str(start_time),
                 "-t", str(duration),
                 "-c:v", "libx264",
-                "-preset", "fast",
-                "-threads", "8",
+                "-preset", "veryfast",  # Nhanh hơn "fast"
+                "-tune", "zerolatency",
+                "-threads", "0",  # Auto select threads
                 "-c:a", "aac",
                 "-b:a", "128k",
                 "-avoid_negative_ts", "1",
@@ -74,12 +72,12 @@ class VideoCutToSegments:
             ]
         
         try:
-            subprocess.run(cmd, capture_output=True, check=True)
+            subprocess.run(cmd, capture_output=True, check=True, stderr=subprocess.DEVNULL)
             return output_path, None
         except subprocess.CalledProcessError as e:
             return None, str(e)
 
-    def cut_video(self, video_url, segment_duration, output_prefix, use_gpu, fast_mode, parallel_workers):
+    def cut_video(self, video_url, segment_duration, output_prefix, use_gpu, accurate_cut, parallel_workers):
         video_url = video_url.strip()
         
         # Kiểm tra file video có tồn tại không
@@ -126,19 +124,21 @@ class VideoCutToSegments:
                 segment_duration,
                 output_path,
                 use_gpu,
-                fast_mode
+                accurate_cut
             ))
         
-        # Xử lý song song với ThreadPoolExecutor
+        # Xử lý song song với ProcessPoolExecutor (tránh GIL của Python)
         cut_videos = []
         errors = []
         
+        mode_str = f"GPU (NVENC-p1)" if use_gpu else "CPU (veryfast)"
+        accuracy_str = "accurate" if accurate_cut else "fast"
         print(f"Starting to cut video into {num_segments} segments using {parallel_workers} workers...")
-        print(f"Mode: {'Fast (copy)' if fast_mode else 'GPU (NVENC)' if use_gpu else 'CPU (libx264)'}")
+        print(f"Mode: {mode_str} | Accuracy: {accuracy_str}")
         
-        with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
+        with ProcessPoolExecutor(max_workers=parallel_workers) as executor:
             # Submit all tasks
-            future_to_segment = {executor.submit(self._cut_single_segment, task): i+1 
+            future_to_segment = {executor.submit(VideoCutToSegments._cut_single_segment, task): i+1 
                                 for i, task in enumerate(tasks)}
             
             # Collect results as they complete
