@@ -28,51 +28,57 @@ class VideoCutToSegments:
         video_url, start_time, duration, output_path, use_gpu, accurate_cut = args
         
         if use_gpu:
-            # GPU mode: NVENC với tối ưu tốc độ tối đa
+            # GPU mode: NVENC H.264 optimized for ComfyUI
             cmd = [
                 "ffmpeg",
                 "-y",
                 "-hwaccel", "cuda",
                 "-hwaccel_output_format", "cuda",
-                "-ss", str(start_time),  # -ss trước -i để seek nhanh hơn
+                "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-t", str(duration),  # Đảm bảo đúng duration
+                "-t", str(duration),
                 "-c:v", "h264_nvenc",
-                "-preset", "p1",  # p1 = fastest (tối ưu tốc độ)
-                "-tune", "hq",  # High quality tune
-                "-rc", "vbr",  # Variable bitrate
-                "-cq", "23",  # Quality level
-                "-b:v", "0",  # Let VBR decide
+                "-preset", "p1",
+                "-tune", "hq",
+                "-profile:v", "high",
+                "-pix_fmt", "yuv420p",
+                "-rc", "vbr",
+                "-cq", "23",
+                "-b:v", "0",
                 "-maxrate", "10M",
-                "-bufsize", "20M",  # Tăng buffer size
+                "-bufsize", "20M",
                 "-c:a", "aac",
                 "-b:a", "128k",
                 "-avoid_negative_ts", "1",
-                "-max_muxing_queue_size", "9999",  # Tránh queue overflow
+                "-max_muxing_queue_size", "9999",
+                "-movflags", "+faststart",
                 output_path
             ]
         else:
-            # CPU mode: libx264 tối ưu
+            # CPU mode: libx264 H.264 optimized for ComfyUI
             cmd = [
                 "ffmpeg",
                 "-y",
-                "-ss", str(start_time),  # -ss trước -i để seek nhanh
+                "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
                 "-t", str(duration),
                 "-c:v", "libx264",
-                "-preset", "veryfast",  # Nhanh hơn "fast"
+                "-preset", "veryfast",
                 "-tune", "zerolatency",
-                "-threads", "0",  # Auto select threads
+                "-profile:v", "high",
+                "-pix_fmt", "yuv420p",
+                "-threads", "0",
                 "-c:a", "aac",
                 "-b:a", "128k",
                 "-avoid_negative_ts", "1",
+                "-movflags", "+faststart",
                 output_path
             ]
         
         try:
-            subprocess.run(cmd, capture_output=True, check=True, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
             return output_path, None
         except subprocess.CalledProcessError as e:
             return None, str(e)
