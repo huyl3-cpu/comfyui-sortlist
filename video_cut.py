@@ -29,7 +29,6 @@ class VideoCutToSegments:
         audio_duration = num_frames / fps
         
         if use_gpu:
-            # GPU mode: NVENC H.264 optimized for ComfyUI
             cmd = [
                 "ffmpeg",
                 "-y",
@@ -60,7 +59,6 @@ class VideoCutToSegments:
                 output_path
             ]
         else:
-            # CPU mode: libx264 H.264 optimized for ComfyUI
             cmd = [
                 "ffmpeg",
                 "-y",
@@ -175,11 +173,11 @@ class VideoCutToSegments:
 
         
         with ProcessPoolExecutor(max_workers=parallel_workers) as executor:
-            # Submit all tasks
+
             future_to_segment = {executor.submit(VideoCutToSegments._cut_single_segment, task): i+1 
                                 for i, task in enumerate(tasks)}
             
-            # Collect results as they complete
+
             for future in as_completed(future_to_segment):
                 segment_num = future_to_segment[future]
                 try:
@@ -192,7 +190,7 @@ class VideoCutToSegments:
                 except Exception as exc:
                     errors.append(f"Segment {segment_num}: {exc}")
         
-        # Sắp xếp theo thứ tự segment
+
         cut_videos.sort(key=lambda x: x[0])
         cut_videos = [path for _, path in cut_videos]
         
@@ -200,7 +198,6 @@ class VideoCutToSegments:
             error_msg = "\n".join(errors)
             return (f"ERROR: Some segments failed:\n{error_msg}", "")
         
-        # Trả về danh sách các đường dẫn, mỗi dòng một video
         videos_list_str = "\n".join(cut_videos)
         
         print(f"✓ Successfully cut video into {num_segments} segments")
