@@ -24,7 +24,9 @@ class VideoCutToSegments:
 
     @staticmethod
     def _cut_single_segment(args):
-        video_url, start_time, num_frames, output_path, use_gpu, accurate_cut = args
+        video_url, start_time, num_frames, output_path, use_gpu, accurate_cut, fps = args
+        
+        audio_duration = num_frames / fps
         
         if use_gpu:
             # GPU mode: NVENC H.264 optimized for ComfyUI
@@ -36,12 +38,15 @@ class VideoCutToSegments:
                 "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-frames:v", str(num_frames),
+                "-vframes", str(num_frames),
+                "-t", str(audio_duration),
                 "-c:v", "h264_nvenc",
                 "-preset", "p1",
                 "-tune", "hq",
                 "-profile:v", "high",
                 "-pix_fmt", "yuv420p",
+                "-vsync", "cfr",
+                "-r", str(fps),
                 "-rc", "vbr",
                 "-cq", "23",
                 "-b:v", "0",
@@ -62,12 +67,15 @@ class VideoCutToSegments:
                 "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-frames:v", str(num_frames),
+                "-vframes", str(num_frames),
+                "-t", str(audio_duration),
                 "-c:v", "libx264",
                 "-preset", "veryfast",
                 "-tune", "zerolatency",
                 "-profile:v", "high",
                 "-pix_fmt", "yuv420p",
+                "-vsync", "cfr",
+                "-r", str(fps),
                 "-threads", "0",
                 "-c:a", "aac",
                 "-b:a", "128k",
@@ -150,8 +158,10 @@ class VideoCutToSegments:
                 segment_frames,
                 output_path,
                 use_gpu,
-                accurate_cut
+                accurate_cut,
+                fps
             ))
+
 
         
         cut_videos = []
