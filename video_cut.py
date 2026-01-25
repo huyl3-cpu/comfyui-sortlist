@@ -24,8 +24,7 @@ class VideoCutToSegments:
 
     @staticmethod
     def _cut_single_segment(args):
-        """Cắt một segment duy nhất (static method để dùng với ProcessPoolExecutor)"""
-        video_url, start_time, duration, output_path, use_gpu, accurate_cut = args
+        video_url, start_time, num_frames, output_path, use_gpu, accurate_cut = args
         
         if use_gpu:
             # GPU mode: NVENC H.264 optimized for ComfyUI
@@ -37,7 +36,7 @@ class VideoCutToSegments:
                 "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-t", str(duration),
+                "-frames:v", str(num_frames),
                 "-c:v", "h264_nvenc",
                 "-preset", "p1",
                 "-tune", "hq",
@@ -63,7 +62,7 @@ class VideoCutToSegments:
                 "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-t", str(duration),
+                "-frames:v", str(num_frames),
                 "-c:v", "libx264",
                 "-preset", "veryfast",
                 "-tune", "zerolatency",
@@ -86,20 +85,36 @@ class VideoCutToSegments:
     def cut_video(self, video_url, segment_duration, output_prefix, use_gpu, accurate_cut, parallel_workers):
         video_url = video_url.strip()
         
-        # Kiểm tra file video có tồn tại không
         if not os.path.isfile(video_url):
             return (f"ERROR: Video file not found → {video_url}",)
         
-        # Lấy thư mục chứa video gốc
         video_dir = os.path.dirname(video_url)
         video_basename = os.path.basename(video_url)
         video_name, video_ext = os.path.splitext(video_basename)
         
-        # Tạo thư mục videos_cut
         output_dir = os.path.join(video_dir, "videos_cut")
         os.makedirs(output_dir, exist_ok=True)
         
-        # Lấy độ dài video bằng ffprobe
+        fps_cmd = [
+            "ffprobe",
+            "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=r_frame_rate",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            video_url
+        ]
+        
+        try:
+            result = subprocess.run(fps_cmd, capture_output=True, text=True, check=True)
+            fps_str = result.stdout.strip()
+            if "/" in fps_str:
+                num, den = fps_str.split("/")
+                fps = float(num) / float(den)
+            else:
+                fps = float(fps_str)
+        except Exception as e:
+            return (f"ERROR: Failed to get video FPS → {str(e)}",)
+        
         duration_cmd = [
             "ffprobe",
             "-v", "error",
@@ -114,33 +129,40 @@ class VideoCutToSegments:
         except Exception as e:
             return (f"ERROR: Failed to get video duration → {str(e)}",)
         
-        # Tính số lượng segment
-        num_segments = math.ceil(total_duration / segment_duration)
+        frames_per_segment = int(segment_duration * fps)
+        total_frames = int(total_duration * fps)
+        num_segments = math.ceil(total_frames / frames_per_segment)
         
-        # Chuẩn bị danh sách tasks cho parallel processing
         tasks = []
         for i in range(num_segments):
-            start_time = i * segment_duration
+            start_frame = i * frames_per_segment
+            start_time = start_frame / fps
+            
+            remaining_frames = total_frames - start_frame
+            segment_frames = min(frames_per_segment, remaining_frames)
+            
             output_filename = f"{output_prefix}-{i+1}.mp4"
             output_path = os.path.join(output_dir, output_filename)
             
             tasks.append((
                 video_url,
                 start_time,
-                segment_duration,
+                segment_frames,
                 output_path,
                 use_gpu,
                 accurate_cut
             ))
+
         
-        # Xử lý song song với ProcessPoolExecutor (tránh GIL của Python)
         cut_videos = []
         errors = []
         
         mode_str = f"GPU (NVENC-p1)" if use_gpu else "CPU (veryfast)"
         accuracy_str = "accurate" if accurate_cut else "fast"
+        print(f"Video FPS: {fps:.2f} | Frames per segment: {frames_per_segment} ({segment_duration}s)")
         print(f"Starting to cut video into {num_segments} segments using {parallel_workers} workers...")
         print(f"Mode: {mode_str} | Accuracy: {accuracy_str}")
+
         
         with ProcessPoolExecutor(max_workers=parallel_workers) as executor:
             # Submit all tasks
