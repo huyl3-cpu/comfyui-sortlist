@@ -1,5 +1,20 @@
-#  Update your requirements.
-#  numpy==1.18.1
+# ComfyUI-SortList Requirements
 
-ffmpeg-python
+# No Python packages required!
+# This node uses only Python built-in modules:
+# - os
+# - subprocess
+# - math
+# - concurrent.futures
 
+# External Dependencies (System Binaries):
+# - ffmpeg (required for video processing)
+# - ffprobe (required for video metadata detection)
+
+# Installation on Google Colab:
+# ffmpeg is pre-installed on Google Colab, no action needed!
+
+# Installation on local machine:
+# Ubuntu/Debian: sudo apt-get install ffmpeg
+# macOS: brew install ffmpeg
+# Windows: Download from https://ffmpeg.org/download.html
