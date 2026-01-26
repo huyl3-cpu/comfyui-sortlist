@@ -83,16 +83,54 @@ class VideoCutToSegments:
             ]
         
         try:
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            # Capture stderr for detailed error logging
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
             return output_path, None
         except subprocess.CalledProcessError as e:
-            return None, str(e)
+            error_msg = e.stderr if e.stderr else str(e)
+            
+            # Auto-fallback: If GPU mode failed, try CPU mode
+            if use_gpu:
+                print(f"[WARNING] GPU encoding failed, trying CPU fallback for segment at {start_time}s...")
+                # Build CPU command
+                cpu_cmd = [
+                    "ffmpeg",
+                    "-y",
+                    "-ss", str(start_time),
+                    "-accurate_seek" if accurate_cut else "-noaccurate_seek",
+                    "-i", video_url,
+                    "-vframes", str(num_frames),
+                    "-t", str(audio_duration),
+                    "-c:v", "libx264",
+                    "-preset", "veryfast",
+                    "-tune", "zerolatency",
+                    "-profile:v", "high",
+                    "-pix_fmt", "yuv420p",
+                    "-vsync", "cfr",
+                    "-r", str(fps),
+                    "-threads", "0",
+                    "-c:a", "aac",
+                    "-b:a", "128k",
+                    "-avoid_negative_ts", "1",
+                    "-movflags", "+faststart",
+                    output_path
+                ]
+                
+                try:
+                    subprocess.run(cpu_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
+                    print(f"[OK] CPU fallback succeeded for segment at {start_time}s")
+                    return output_path, None
+                except subprocess.CalledProcessError as cpu_error:
+                    cpu_error_msg = cpu_error.stderr if cpu_error.stderr else str(cpu_error)
+                    return None, f"GPU Error: {error_msg[:200]}...\nCPU Fallback Error: {cpu_error_msg[:200]}..."
+            
+            return None, f"Command '{' '.join(cmd)[:100]}...' returned non-zero exit status {e.returncode}.\nError: {error_msg[:300]}..."
 
     def cut_video(self, video_url, segment_duration, output_prefix, use_gpu, accurate_cut, parallel_workers):
         video_url = video_url.strip()
         
         if not os.path.isfile(video_url):
-            return (f"ERROR: Video file not found → {video_url}",)
+            return (f"ERROR: Video file not found -> {video_url}",)
         
         video_dir = os.path.dirname(video_url)
         video_basename = os.path.basename(video_url)
@@ -119,7 +157,7 @@ class VideoCutToSegments:
             else:
                 fps = float(fps_str)
         except Exception as e:
-            return (f"ERROR: Failed to get video FPS → {str(e)}",)
+            return (f"ERROR: Failed to get video FPS -> {str(e)}",)
         
         duration_cmd = [
             "ffprobe",
@@ -133,7 +171,7 @@ class VideoCutToSegments:
             result = subprocess.run(duration_cmd, capture_output=True, text=True, check=True)
             total_duration = float(result.stdout.strip())
         except Exception as e:
-            return (f"ERROR: Failed to get video duration → {str(e)}",)
+            return (f"ERROR: Failed to get video duration -> {str(e)}",)
         
         frames_per_segment = int(segment_duration * fps)
         total_frames = int(total_duration * fps)
