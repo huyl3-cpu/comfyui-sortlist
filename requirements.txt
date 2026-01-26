@@ -1,20 +1,49 @@
 # ComfyUI-SortList Requirements
 
-# No Python packages required!
+# ============================================
+# Python Packages: NONE REQUIRED
+# ============================================
 # This node uses only Python built-in modules:
 # - os
-# - subprocess
+# - subprocess  
 # - math
 # - concurrent.futures
 
-# External Dependencies (System Binaries):
-# - ffmpeg (required for video processing)
-# - ffprobe (required for video metadata detection)
+# ============================================
+# System Binaries: REQUIRED
+# ============================================
+# The following system binaries MUST be installed:
+# - ffmpeg (for video processing)
+# - ffprobe (for video metadata detection)
 
-# Installation on Google Colab:
-# ffmpeg is pre-installed on Google Colab, no action needed!
+# NOTE: These CANNOT be installed via pip!
+# They are system-level binaries that must be installed separately.
 
-# Installation on local machine:
-# Ubuntu/Debian: sudo apt-get install ffmpeg
-# macOS: brew install ffmpeg
-# Windows: Download from https://ffmpeg.org/download.html
+# ============================================
+# Installation Instructions
+# ============================================
+
+# Google Colab (Usually Pre-installed):
+# Run this to verify (should already exist):
+#   !ffmpeg -version
+#   !ffprobe -version
+#
+# If not installed, run:
+#   !apt-get update -qq && apt-get install -y ffmpeg
+
+# Local Ubuntu/Debian:
+#   sudo apt-get update
+#   sudo apt-get install ffmpeg
+
+# Local macOS:
+#   brew install ffmpeg
+
+# Local Windows:
+#   Download from: https://ffmpeg.org/download.html
+#   Add to PATH after installation
+
+# ============================================
+# Verification
+# ============================================
+# To check if dependencies are installed, run:
+#   python check_dependencies.py

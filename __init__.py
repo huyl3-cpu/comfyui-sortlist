@@ -1,10 +1,45 @@
 import sys
 import os
+import subprocess
 
 # Add PyArmor runtime to Python path
 _runtime_path = os.path.join(os.path.dirname(__file__), "pyarmor_runtime_000000")
 if _runtime_path not in sys.path:
     sys.path.insert(0, _runtime_path)
+
+# Check for required system dependencies (ffmpeg/ffprobe)
+def _check_ffmpeg():
+    """Check if ffmpeg and ffprobe are available"""
+    def check_cmd(cmd):
+        try:
+            subprocess.run([cmd, '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=3)
+            return True
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return False
+    
+    ffmpeg_ok = check_cmd('ffmpeg')
+    ffprobe_ok = check_cmd('ffprobe')
+    
+    if not ffmpeg_ok or not ffprobe_ok:
+        print("\n" + "=" * 70)
+        print("[comfyui-sortlist] WARNING: Missing required dependencies!")
+        print("=" * 70)
+        if not ffmpeg_ok:
+            print("  [MISSING] ffmpeg - Required for video processing")
+        if not ffprobe_ok:
+            print("  [MISSING] ffprobe - Required for video metadata detection")
+        print("\nSome video nodes (e.g., Video Cut) will NOT work without these!")
+        print("\nInstallation:")
+        print("  Google Colab:    !apt-get install -y ffmpeg")
+        print("  Ubuntu/Debian:   sudo apt-get install ffmpeg")
+        print("  macOS:           brew install ffmpeg")
+        print("  Windows:         Download from https://ffmpeg.org/download.html")
+        print("=" * 70 + "\n")
+        return False
+    return True
+
+# Run dependency check (non-blocking warning)
+_check_ffmpeg()
 
 WEB_DIRECTORY = "."
 
