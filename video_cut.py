@@ -91,7 +91,7 @@ class VideoCutToSegments:
             
             # Auto-fallback: If GPU mode failed, try CPU mode
             if use_gpu:
-                print(f"[WARNING] GPU encoding failed, trying CPU fallback for segment at {start_time}s...")
+                # print(f"[WARNING] GPU encoding failed, trying CPU fallback for segment at {start_time}s...")
                 # Build CPU command
                 cpu_cmd = [
                     "ffmpeg",
@@ -118,7 +118,7 @@ class VideoCutToSegments:
                 
                 try:
                     subprocess.run(cpu_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
-                    print(f"[OK] CPU fallback succeeded for segment at {start_time}s")
+                    # print(f"[OK] CPU fallback succeeded for segment at {start_time}s")
                     return output_path, None
                 except subprocess.CalledProcessError as cpu_error:
                     cpu_error_msg = cpu_error.stderr if cpu_error.stderr else str(cpu_error)
@@ -205,9 +205,9 @@ class VideoCutToSegments:
         
         mode_str = f"GPU (NVENC-p1)" if use_gpu else "CPU (veryfast)"
         accuracy_str = "accurate" if accurate_cut else "fast"
-        print(f"Video FPS: {fps:.2f} | Frames per segment: {frames_per_segment} ({segment_duration}s)")
-        print(f"Starting to cut video into {num_segments} segments using {parallel_workers} workers...")
-        print(f"Mode: {mode_str} | Accuracy: {accuracy_str}")
+        # print(f"Video FPS: {fps:.2f} | Frames per segment: {frames_per_segment} ({segment_duration}s)")
+        # print(f"Starting to cut video into {num_segments} segments using {parallel_workers} workers...")
+        # print(f"Mode: {mode_str} | Accuracy: {accuracy_str}")
 
         
         with ProcessPoolExecutor(max_workers=parallel_workers) as executor:
@@ -224,7 +224,7 @@ class VideoCutToSegments:
                         errors.append(f"Segment {segment_num}: {error}")
                     else:
                         cut_videos.append((segment_num, output_path))
-                        print(f"✓ Completed segment {segment_num}/{num_segments}")
+                        # print(f"✓ Completed segment {segment_num}/{num_segments}")
                 except Exception as exc:
                     errors.append(f"Segment {segment_num}: {exc}")
         
