@@ -29,9 +29,16 @@ class ColabKeepAlive:
         return {
             "required": {
                 "enabled": ("BOOLEAN", {"default": True}),
-                "interval_seconds": ("INT", {
-                    "default": 45,
+                "interval_min": ("INT", {
+                    "default": 30,
                     "min": 15,
+                    "max": 60,
+                    "step": 5,
+                    "display": "slider"
+                }),
+                "interval_max": ("INT", {
+                    "default": 60,
+                    "min": 30,
                     "max": 120,
                     "step": 5,
                     "display": "slider"
@@ -49,7 +56,7 @@ class ColabKeepAlive:
     FUNCTION = "execute"
     CATEGORY = "SortList/Utils"
     
-    def execute(self, enabled: bool, interval_seconds: int, method: str, any_input=None) -> Tuple[str, Any]:
+    def execute(self, enabled: bool, interval_min: int, interval_max: int, method: str, any_input=None) -> Tuple[str, Any]:
         global _keepalive_thread, _keepalive_running
         
         if not enabled:
@@ -57,7 +64,7 @@ class ColabKeepAlive:
             return ("⏹️ KeepAlive disabled", any_input)
         
         if _keepalive_thread is not None and _keepalive_thread.is_alive():
-            return (f"✅ KeepAlive running ({method}, {interval_seconds}s)", any_input)
+            return (f"✅ KeepAlive running ({method}, {interval_min}-{interval_max}s)", any_input)
         
         _keepalive_running = True
         
@@ -92,7 +99,10 @@ class ColabKeepAlive:
                         with open(touch_file, "w") as f:
                             f.write(f"{time.time()}-{counter}-{random.random()}")
                         
-                        # 3. Colab kernel heartbeat + JavaScript mouse simulation
+                        # 3. Colab kernel heartbeat + JavaScript browser activity simulation
+                        # NOTE: This runs in Colab notebook context, NOT in ComfyUI!
+                        # ComfyUI runs in a separate browser tab via tunnel, so these
+                        # events will NOT click on your workflow - completely safe!
                         try:
                             from google.colab import output
                             # Simple console log
@@ -201,19 +211,18 @@ class ColabKeepAlive:
                         with open(touch_file, "w") as f:
                             f.write(f"{time.time()}-{counter}")
                     
-                    # Vary sleep time slightly to avoid pattern detection
-                    jitter = random.uniform(-5, 5)
-                    sleep_time = max(15, interval_seconds + jitter)
+                    # Random sleep time within user-defined range to avoid pattern detection
+                    sleep_time = random.uniform(interval_min, interval_max)
                     time.sleep(sleep_time)
                     
                 except Exception as e:
                     print(f"[KeepAlive] Error: {e}")
-                    time.sleep(interval_seconds)
+                    time.sleep(random.uniform(interval_min, interval_max))
         
         _keepalive_thread = threading.Thread(target=keepalive_worker, daemon=True)
         _keepalive_thread.start()
         
-        return (f"🟢 KeepAlive started ({method}, every ~{interval_seconds}s)", any_input)
+        return (f"🟢 KeepAlive started ({method}, random {interval_min}-{interval_max}s)", any_input)
 
 
 
