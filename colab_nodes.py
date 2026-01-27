@@ -92,14 +92,52 @@ class ColabKeepAlive:
                         with open(touch_file, "w") as f:
                             f.write(f"{time.time()}-{counter}-{random.random()}")
                         
-                        # 3. Colab kernel heartbeat
+                        # 3. Colab kernel heartbeat + JavaScript mouse simulation
                         try:
                             from google.colab import output
+                            # Simple console log
                             output.eval_js('console.log("keepalive")', ignore_result=True)
+                            
+                            # Full browser activity simulation (from colab_heartbeat)
+                            output.eval_js('''
+                                (function() {
+                                    // Simulate mouse movement
+                                    document.dispatchEvent(new MouseEvent('mousemove', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        clientX: Math.random() * 100,
+                                        clientY: Math.random() * 100
+                                    }));
+                                    
+                                    // Simulate mouse click on body
+                                    document.body.dispatchEvent(new MouseEvent('click', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        clientX: 50,
+                                        clientY: 50
+                                    }));
+                                    
+                                    // Simulate keyboard activity
+                                    document.dispatchEvent(new KeyboardEvent('keydown', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        key: 'Shift'
+                                    }));
+                                    
+                                    // Simulate scroll
+                                    window.dispatchEvent(new Event('scroll'));
+                                    
+                                    // Simulate focus
+                                    window.dispatchEvent(new Event('focus'));
+                                    
+                                    // Log for debugging
+                                    console.log('Colab keepalive full simulation: ' + Date.now());
+                                })();
+                            ''', ignore_result=True)
                         except Exception:
                             pass
                         
-                        # 4. WebSocket ping via IPython
+                        # 4. WebSocket ping via IPython kernel
                         try:
                             from IPython import get_ipython
                             ip = get_ipython()
@@ -116,7 +154,7 @@ class ColabKeepAlive:
                         
                         # 6. Log activity
                         with open(colab_log, "a") as f:
-                            f.write(f"{time.time()}: keepalive #{counter}\n")
+                            f.write(f"{time.time()}: keepalive #{counter} (aggressive+mouse)\n")
                     
                     elif method == "colab_heartbeat":
                         # Colab-specific heartbeat
