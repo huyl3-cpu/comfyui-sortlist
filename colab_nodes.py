@@ -21,7 +21,7 @@ _tunnel_proc: Optional[subprocess.Popen] = None
 class ColabKeepAlive:
     """
     Node to prevent Google Colab from disconnecting due to inactivity.
-    Creates periodic activity to keep the session alive.
+    Enhanced version with multiple anti-idle strategies for long-running workflows (8+ hours).
     """
     
     @classmethod
@@ -30,13 +30,14 @@ class ColabKeepAlive:
             "required": {
                 "enabled": ("BOOLEAN", {"default": True}),
                 "interval_seconds": ("INT", {
-                    "default": 60,
-                    "min": 30,
-                    "max": 300,
-                    "step": 10,
+                    "default": 45,
+                    "min": 15,
+                    "max": 120,
+                    "step": 5,
                     "display": "slider"
                 }),
-                "method": (["memory_touch", "file_touch", "gpu_ping"], {"default": "memory_touch"}),
+                "method": (["aggressive", "gpu_ping", "colab_heartbeat", "memory_touch", "file_touch"], 
+                          {"default": "aggressive"}),
             },
             "optional": {
                 "any_input": ("*",),
@@ -62,30 +63,110 @@ class ColabKeepAlive:
         
         def keepalive_worker():
             import gc
+            import random
             touch_file = "/tmp/.colab_keepalive"
+            colab_log = "/tmp/.colab_activity_log"
+            counter = 0
             
             while _keepalive_running:
                 try:
-                    if method == "memory_touch":
-                        _ = [0] * 1000000
+                    counter += 1
+                    
+                    if method == "aggressive":
+                        # === AGGRESSIVE MODE: All methods combined ===
+                        
+                        # 1. GPU ping
+                        try:
+                            import torch
+                            if torch.cuda.is_available():
+                                # Larger tensor to create more GPU activity
+                                x = torch.randn(100, 100, device="cuda")
+                                y = torch.matmul(x, x.T)
+                                del x, y
+                                torch.cuda.synchronize()
+                                torch.cuda.empty_cache()
+                        except Exception:
+                            pass
+                        
+                        # 2. File I/O activity
+                        with open(touch_file, "w") as f:
+                            f.write(f"{time.time()}-{counter}-{random.random()}")
+                        
+                        # 3. Colab kernel heartbeat
+                        try:
+                            from google.colab import output
+                            output.eval_js('console.log("keepalive")', ignore_result=True)
+                        except Exception:
+                            pass
+                        
+                        # 4. WebSocket ping via IPython
+                        try:
+                            from IPython import get_ipython
+                            ip = get_ipython()
+                            if ip:
+                                # Trigger kernel activity
+                                ip.kernel.do_one_iteration()
+                        except Exception:
+                            pass
+                        
+                        # 5. Memory churn
+                        _ = [random.random() for _ in range(100000)]
                         del _
                         gc.collect()
+                        
+                        # 6. Log activity
+                        with open(colab_log, "a") as f:
+                            f.write(f"{time.time()}: keepalive #{counter}\n")
                     
-                    elif method == "file_touch":
-                        with open(touch_file, "w") as f:
-                            f.write(str(time.time()))
+                    elif method == "colab_heartbeat":
+                        # Colab-specific heartbeat
+                        try:
+                            from google.colab import output
+                            # Execute JavaScript to simulate activity
+                            output.eval_js('''
+                                (function() {
+                                    // Simulate minimal activity
+                                    document.dispatchEvent(new Event('mousemove'));
+                                    console.log('Colab keepalive: ' + Date.now());
+                                })();
+                            ''', ignore_result=True)
+                        except Exception:
+                            pass
+                        
+                        # Also ping kernel
+                        try:
+                            from IPython import get_ipython
+                            ip = get_ipython()
+                            if ip and hasattr(ip, 'kernel'):
+                                ip.kernel.do_one_iteration()
+                        except Exception:
+                            pass
                     
                     elif method == "gpu_ping":
                         try:
                             import torch
                             if torch.cuda.is_available():
-                                x = torch.zeros(1, device="cuda")
-                                del x
+                                x = torch.randn(50, 50, device="cuda")
+                                _ = torch.matmul(x, x)
+                                del x, _
+                                torch.cuda.synchronize()
                                 torch.cuda.empty_cache()
-                        except ImportError:
+                        except Exception:
                             pass
                     
-                    time.sleep(interval_seconds)
+                    elif method == "memory_touch":
+                        _ = [random.random() for _ in range(500000)]
+                        del _
+                        gc.collect()
+                    
+                    elif method == "file_touch":
+                        with open(touch_file, "w") as f:
+                            f.write(f"{time.time()}-{counter}")
+                    
+                    # Vary sleep time slightly to avoid pattern detection
+                    jitter = random.uniform(-5, 5)
+                    sleep_time = max(15, interval_seconds + jitter)
+                    time.sleep(sleep_time)
                     
                 except Exception as e:
                     print(f"[KeepAlive] Error: {e}")
@@ -94,7 +175,8 @@ class ColabKeepAlive:
         _keepalive_thread = threading.Thread(target=keepalive_worker, daemon=True)
         _keepalive_thread.start()
         
-        return (f"🟢 KeepAlive started ({method}, every {interval_seconds}s)", any_input)
+        return (f"🟢 KeepAlive started ({method}, every ~{interval_seconds}s)", any_input)
+
 
 
 class TunnelAutoReconnect:
