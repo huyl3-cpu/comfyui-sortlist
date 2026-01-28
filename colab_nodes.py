@@ -437,6 +437,33 @@ class RAMCleanup:
     FUNCTION = "execute"
     CATEGORY = "SortList/Utils"
     
+    def _get_memory_info(self):
+        """Get current memory usage for reporting."""
+        info = {}
+        
+        # CPU RAM
+        try:
+            import psutil
+            mem = psutil.virtual_memory()
+            info["ram_used_gb"] = mem.used / (1024**3)
+            info["ram_total_gb"] = mem.total / (1024**3)
+            info["ram_percent"] = mem.percent
+        except Exception:
+            pass
+        
+        # GPU VRAM
+        try:
+            import torch
+            if torch.cuda.is_available():
+                info["vram_used_gb"] = torch.cuda.memory_allocated() / (1024**3)
+                info["vram_reserved_gb"] = torch.cuda.memory_reserved() / (1024**3)
+                props = torch.cuda.get_device_properties(0)
+                info["vram_total_gb"] = props.total_memory / (1024**3)
+        except Exception:
+            pass
+        
+        return info
+    
     def execute(self, enabled: bool, clean_gpu: bool, clean_cpu: bool, unload_models: bool, any_input=None):
         if not enabled:
             return ("⏹️ RAM Cleanup disabled", any_input)
@@ -444,29 +471,10 @@ class RAMCleanup:
         import gc
         status_parts = []
         
-        # Clean CPU RAM
-        if clean_cpu:
-            gc.collect()
-            status_parts.append("CPU RAM")
+        # Get memory BEFORE cleanup
+        before = self._get_memory_info()
         
-        # Clean GPU VRAM
-        if clean_gpu:
-            try:
-                import torch
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-                    torch.cuda.ipc_collect()
-                    torch.cuda.synchronize()
-                    # Clear cublas workspaces
-                    try:
-                        torch._C._cuda_clearCublasWorkspaces()
-                    except Exception:
-                        pass
-                    status_parts.append("GPU VRAM")
-            except Exception:
-                pass
-        
-        # Unload all models from ComfyUI (aggressive)
+        # Unload all models from ComfyUI FIRST (most effective)
         if unload_models:
             try:
                 import comfy.model_management as mm
@@ -476,11 +484,65 @@ class RAMCleanup:
             except Exception:
                 pass
         
+        # Clean CPU RAM - multiple passes
+        if clean_cpu:
+            # Multiple GC passes for thorough cleanup
+            for _ in range(3):
+                gc.collect()
+            
+            # Force release memory back to OS (Linux only)
+            try:
+                import ctypes
+                libc = ctypes.CDLL("libc.so.6")
+                libc.malloc_trim(0)
+            except Exception:
+                pass
+            
+            status_parts.append("CPU RAM")
+        
+        # Clean GPU VRAM
+        if clean_gpu:
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    # Synchronize first
+                    torch.cuda.synchronize()
+                    
+                    # Clear all caches
+                    torch.cuda.empty_cache()
+                    torch.cuda.ipc_collect()
+                    
+                    # Clear cublas workspaces
+                    try:
+                        torch._C._cuda_clearCublasWorkspaces()
+                    except Exception:
+                        pass
+                    
+                    # Reset peak memory stats
+                    torch.cuda.reset_peak_memory_stats()
+                    
+                    status_parts.append("GPU VRAM")
+            except Exception:
+                pass
+        
         # Final cleanup
         gc.collect()
         
+        # Get memory AFTER cleanup
+        after = self._get_memory_info()
+        
+        # Build status with memory delta
         if status_parts:
             status = f"🧹 Cleaned: {', '.join(status_parts)}"
+            
+            # Add memory delta if available
+            if "ram_used_gb" in before and "ram_used_gb" in after:
+                ram_freed = before["ram_used_gb"] - after["ram_used_gb"]
+                status += f" | RAM: {ram_freed:+.2f}GB"
+            
+            if "vram_used_gb" in before and "vram_used_gb" in after:
+                vram_freed = before["vram_used_gb"] - after["vram_used_gb"]
+                status += f" | VRAM: {vram_freed:+.2f}GB"
         else:
             status = "⚠️ No cleanup performed"
         
