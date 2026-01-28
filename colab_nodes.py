@@ -412,12 +412,89 @@ class TunnelAutoReconnect:
         return (status, url, any_input)
 
 
+class RAMCleanup:
+    """
+    Node to aggressively clean up RAM and VRAM when workflow passes through.
+    Useful between heavy processing steps to free up memory.
+    """
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "enabled": ("BOOLEAN", {"default": True}),
+                "clean_gpu": ("BOOLEAN", {"default": True, "tooltip": "Clean GPU VRAM"}),
+                "clean_cpu": ("BOOLEAN", {"default": True, "tooltip": "Clean CPU RAM"}),
+                "unload_models": ("BOOLEAN", {"default": False, "tooltip": "Unload all models from ComfyUI memory (aggressive)"}),
+            },
+            "optional": {
+                "any_input": ("*",),
+            }
+        }
+    
+    RETURN_TYPES = ("STRING", "*")
+    RETURN_NAMES = ("status", "passthrough")
+    FUNCTION = "execute"
+    CATEGORY = "SortList/Utils"
+    
+    def execute(self, enabled: bool, clean_gpu: bool, clean_cpu: bool, unload_models: bool, any_input=None):
+        if not enabled:
+            return ("⏹️ RAM Cleanup disabled", any_input)
+        
+        import gc
+        status_parts = []
+        
+        # Clean CPU RAM
+        if clean_cpu:
+            gc.collect()
+            status_parts.append("CPU RAM")
+        
+        # Clean GPU VRAM
+        if clean_gpu:
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    torch.cuda.ipc_collect()
+                    torch.cuda.synchronize()
+                    # Clear cublas workspaces
+                    try:
+                        torch._C._cuda_clearCublasWorkspaces()
+                    except Exception:
+                        pass
+                    status_parts.append("GPU VRAM")
+            except Exception:
+                pass
+        
+        # Unload all models from ComfyUI (aggressive)
+        if unload_models:
+            try:
+                import comfy.model_management as mm
+                mm.unload_all_models()
+                mm.soft_empty_cache()
+                status_parts.append("Unloaded models")
+            except Exception:
+                pass
+        
+        # Final cleanup
+        gc.collect()
+        
+        if status_parts:
+            status = f"🧹 Cleaned: {', '.join(status_parts)}"
+        else:
+            status = "⚠️ No cleanup performed"
+        
+        return (status, any_input)
+
+
 NODE_CLASS_MAPPINGS = {
     "ColabKeepAlive": ColabKeepAlive,
     "TunnelAutoReconnect": TunnelAutoReconnect,
+    "RAMCleanup": RAMCleanup,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ColabKeepAlive": "🔋 Colab Keep Alive",
     "TunnelAutoReconnect": "🔗 Tunnel Auto Reconnect",
+    "RAMCleanup": "🧹 RAM Cleanup",
 }
