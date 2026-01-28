@@ -358,44 +358,48 @@ class TunnelAutoReconnect:
         
         def tunnel_worker():
             global _tunnel_proc
-            retries = 0
             
-            while _tunnel_running and retries < max_retries:
-                if not is_port_available(local_port):
-                    print(f"[Tunnel] Waiting for port {local_port}...")
-                    time.sleep(check_interval)
-                    continue
-                
-                proc = start_tunnel()
-                if proc is None:
-                    retries += 1
-                    time.sleep(check_interval)
-                    continue
-                
-                print(f"[Tunnel] Started {tunnel_type} tunnel")
-                
-                output_buffer = ""
-                while _tunnel_running and proc.poll() is None:
-                    try:
-                        line = proc.stdout.readline()
-                        if line:
-                            output_buffer += line
-                            print(f"[Tunnel] {line.strip()}")
-                            
-                            url = extract_url_from_output(output_buffer)
-                            if url:
-                                tunnel_url_holder["url"] = url
-                                print(f"[Tunnel] URL: {url}")
-                    except Exception:
-                        pass
-                
-                if _tunnel_running:
-                    retries += 1
-                    print(f"[Tunnel] Disconnected. Retry {retries}/{max_retries}...")
-                    time.sleep(5)
+            # Wait for port to be available
+            wait_count = 0
+            while _tunnel_running and not is_port_available(local_port) and wait_count < 30:
+                print(f"⏳ Waiting for ComfyUI on port {local_port}...")
+                time.sleep(2)
+                wait_count += 1
             
-            if retries >= max_retries:
-                print(f"[Tunnel] Max retries reached.")
+            if not is_port_available(local_port):
+                print(f"❌ Port {local_port} not available after waiting")
+                return
+            
+            print(f"✅ ComfyUI ready, starting tunnel...")
+            proc = start_tunnel()
+            if proc is None:
+                print(f"❌ Failed to start tunnel")
+                return
+            
+            print(f"🚀 Tunnel: Started {tunnel_type}")
+            
+            output_buffer = ""
+            while _tunnel_running and proc.poll() is None:
+                try:
+                    line = proc.stdout.readline()
+                    if line:
+                        output_buffer += line
+                        # Redact token from output
+                        display_line = line.strip()
+                        if token and token in display_line:
+                            display_line = display_line.replace(token, "[REDACTED]")
+                        print(f"🔗 Tunnel: {display_line}")
+                        
+                        url = extract_url_from_output(output_buffer)
+                        if url:
+                            tunnel_url_holder["url"] = url
+                            print(f"🌐 Tunnel URL: {url}")
+                except Exception:
+                    pass
+            
+            # If we get here, tunnel ended
+            if _tunnel_running:
+                print(f"⚠ Tunnel disconnected. Giving up.")
         
         _tunnel_thread = threading.Thread(target=tunnel_worker, daemon=True)
         _tunnel_thread.start()
