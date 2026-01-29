@@ -11,6 +11,7 @@ class VideoCutToSegments:
                 "video_url": ("STRING", {"default": ""}),
                 "segment_duration": ("INT", {"default": 8, "min": 1, "max": 3600}),
                 "output_prefix": ("STRING", {"default": "a"}),
+                "resolution": (["original", "480p", "720p", "1080p"], {"default": "original"}),
                 "use_gpu": ("BOOLEAN", {"default": True}),
                 "accurate_cut": ("BOOLEAN", {"default": True}),
                 "parallel_workers": ("INT", {"default": 4, "min": 1, "max": 16}),
@@ -22,11 +23,27 @@ class VideoCutToSegments:
     FUNCTION = "cut_video"
     CATEGORY = "video"
 
+    # Resolution mapping
+    RESOLUTION_MAP = {
+        "480p": (854, 480),
+        "720p": (1280, 720),
+        "1080p": (1920, 1080),
+        "original": None
+    }
+
     @staticmethod
     def _cut_single_segment(args):
-        video_url, start_time, num_frames, output_path, use_gpu, accurate_cut, fps = args
+        video_url, start_time, num_frames, output_path, use_gpu, accurate_cut, fps, resolution = args
         
         audio_duration = num_frames / fps
+        
+        # Get scale filter if resolution is specified
+        scale_filter = None
+        if resolution != "original" and resolution in VideoCutToSegments.RESOLUTION_MAP:
+            res = VideoCutToSegments.RESOLUTION_MAP[resolution]
+            if res:
+                # Scale to height, maintain aspect ratio, ensure even dimensions
+                scale_filter = f"scale=-2:{res[1]}"
         
         if use_gpu:
             cmd = [
@@ -39,6 +56,13 @@ class VideoCutToSegments:
                 "-i", video_url,
                 "-vframes", str(num_frames),
                 "-t", str(audio_duration),
+            ]
+            
+            # Add scale filter if specified (need to download from GPU first)
+            if scale_filter:
+                cmd.extend(["-vf", f"hwdownload,format=nv12,{scale_filter},format=yuv420p"])
+            
+            cmd.extend([
                 "-c:v", "h264_nvenc",
                 "-preset", "p1",
                 "-tune", "hq",
@@ -57,7 +81,7 @@ class VideoCutToSegments:
                 "-max_muxing_queue_size", "9999",
                 "-movflags", "+faststart",
                 output_path
-            ]
+            ])
         else:
             cmd = [
                 "ffmpeg",
@@ -67,6 +91,13 @@ class VideoCutToSegments:
                 "-i", video_url,
                 "-vframes", str(num_frames),
                 "-t", str(audio_duration),
+            ]
+            
+            # Add scale filter if specified
+            if scale_filter:
+                cmd.extend(["-vf", scale_filter])
+            
+            cmd.extend([
                 "-c:v", "libx264",
                 "-preset", "veryfast",
                 "-tune", "zerolatency",
@@ -80,7 +111,7 @@ class VideoCutToSegments:
                 "-avoid_negative_ts", "1",
                 "-movflags", "+faststart",
                 output_path
-            ]
+            ])
         
         try:
             # Capture stderr for detailed error logging
@@ -101,6 +132,13 @@ class VideoCutToSegments:
                     "-i", video_url,
                     "-vframes", str(num_frames),
                     "-t", str(audio_duration),
+                ]
+                
+                # Add scale filter if specified
+                if scale_filter:
+                    cpu_cmd.extend(["-vf", scale_filter])
+                
+                cpu_cmd.extend([
                     "-c:v", "libx264",
                     "-preset", "veryfast",
                     "-tune", "zerolatency",
@@ -114,7 +152,7 @@ class VideoCutToSegments:
                     "-avoid_negative_ts", "1",
                     "-movflags", "+faststart",
                     output_path
-                ]
+                ])
                 
                 try:
                     subprocess.run(cpu_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
@@ -126,7 +164,7 @@ class VideoCutToSegments:
             
             return None, f"Command '{' '.join(cmd)[:100]}...' returned non-zero exit status {e.returncode}.\nError: {error_msg[:300]}..."
 
-    def cut_video(self, video_url, segment_duration, output_prefix, use_gpu, accurate_cut, parallel_workers):
+    def cut_video(self, video_url, segment_duration, output_prefix, resolution, use_gpu, accurate_cut, parallel_workers):
         video_url = video_url.strip()
         
         if not os.path.isfile(video_url):
@@ -195,7 +233,8 @@ class VideoCutToSegments:
                 output_path,
                 use_gpu,
                 accurate_cut,
-                fps
+                fps,
+                resolution
             ))
 
 
