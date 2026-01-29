@@ -116,7 +116,7 @@ class VHS_VideoFrameGuard:
         for p in path_list:
             dur, fps_meta, nb_frames = _run_ffprobe_duration(p)
 
-            fps_used = float(force_rate_fps) if force_rate_fps and force_rate_fps > 0 else (fps_meta or 30.0)
+            fps_used = float(force_rate_fps) if force_rate_fps and float(force_rate_fps) > 0 else (fps_meta or 30.0)
 
             # Estimate frames:
             # Prefer duration if available, else fallback nb_frames, else unknown -> assume fail-safe
@@ -187,7 +187,7 @@ class VHS_VideoPickMinFrames:
         for p in paths:
             dur, fps_meta, nb_frames = _run_ffprobe_duration(p)
 
-            fps_used = float(force_rate_fps) if force_rate_fps and force_rate_fps > 0 else (fps_meta or 30.0)
+            fps_used = float(force_rate_fps) if force_rate_fps and float(force_rate_fps) > 0 else (fps_meta or 30.0)
 
             # Prefer duration-based estimate; fallback nb_frames; fallback huge (fail-safe)
             if dur is not None and dur > 0:
