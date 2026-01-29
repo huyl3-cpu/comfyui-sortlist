@@ -71,6 +71,17 @@ try:
 except Exception as e:
     print(f"[comfyui-sortlist] Skipped 'video_frame_guard' due to import error: {e}")
 
+try:
+    from .vhs_extract_path import VHS_ExtractVideoPath
+    NODE_CLASS_MAPPINGS.update({
+        "VHS_ExtractVideoPath": VHS_ExtractVideoPath,
+    })
+    NODE_DISPLAY_NAME_MAPPINGS.update({
+        "VHS_ExtractVideoPath": "Extract Video Path from VHS_FILENAMES",
+    })
+except Exception as e:
+    print(f"[comfyui-sortlist] Skipped 'vhs_extract_path' due to import error: {e}")
+
 _safe_merge("value")
 from .set_value_with_path import NODE_CLASS_MAPPINGS as _m, NODE_DISPLAY_NAME_MAPPINGS as _n
 NODE_CLASS_MAPPINGS.update(_m)
