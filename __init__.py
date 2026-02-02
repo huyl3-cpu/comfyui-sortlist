@@ -87,4 +87,6 @@ from .set_value_with_path import NODE_CLASS_MAPPINGS as _m, NODE_DISPLAY_NAME_MA
 NODE_CLASS_MAPPINGS.update(_m)
 NODE_DISPLAY_NAME_MAPPINGS.update(_n)
 
+_safe_merge("adaptive_resolution")
+
 _safe_merge("colab_nodes")
