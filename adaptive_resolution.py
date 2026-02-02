@@ -34,40 +34,45 @@ class AdaptiveResolution:
             },
         }
     
-    RETURN_TYPES = ("INT",)
-    RETURN_NAMES = ("resolution",)
+    RETURN_TYPES = ("INT", "INT")
+    RETURN_NAMES = ("resolution", "batch_size")
     FUNCTION = "calculate_resolution"
     CATEGORY = "utils"
     DESCRIPTION = """
-    Automatically determines output resolution based on input dimensions.
+    Automatically determines output resolution and batch size based on input dimensions.
     
     Rules:
-    - min(w,h) ≤ 480 → 720p output
-    - 480 < min(w,h) ≤ 720 → 1080p output  
-    - min(w,h) > 720 → 1080p output
+    - min(w,h) ≤ 480 → 720p output, batch_size=8
+    - 480 < min(w,h) ≤ 720 → 1080p output, batch_size=3
+    - min(w,h) > 720 → 1080p output, batch_size=3
     """
     
     def calculate_resolution(self, width, height):
         """
-        Calculate output resolution based on minimum dimension.
+        Calculate output resolution and batch size based on minimum dimension.
         
         Args:
             width: Input width
             height: Input height
             
         Returns:
-            int: Output resolution (720 or 1080)
+            tuple: (resolution, batch_size)
+                - resolution: 720 or 1080
+                - batch_size: 8 for 720p, 3 for 1080p
         """
         min_dimension = min(width, height)
         
         if min_dimension <= 480:
             output_resolution = 720
+            batch_size = 8
         elif min_dimension <= 720:
             output_resolution = 1080
+            batch_size = 3
         else:
             output_resolution = 1080
+            batch_size = 3
         
-        return (output_resolution,)
+        return (output_resolution, batch_size)
 
 
 # Node registration
