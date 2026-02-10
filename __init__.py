@@ -90,6 +90,8 @@ from .set_value_for_dancing import NODE_CLASS_MAPPINGS as _m2, NODE_DISPLAY_NAME
 NODE_CLASS_MAPPINGS.update(_m2)
 NODE_DISPLAY_NAME_MAPPINGS.update(_n2)
 
+_safe_merge("file_list_loader")
+
 _safe_merge("adaptive_resolution")
 
 _safe_merge("colab_nodes")
