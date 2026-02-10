@@ -19,7 +19,7 @@ class FileListLoader:
             }
         }
 
-    RETURN_TYPES = ("LIST", "INT")
+    RETURN_TYPES = ("STRING", "INT")
     RETURN_NAMES = ("file_paths", "count")
     FUNCTION = "run"
     CATEGORY = "comfyui-sortlist"
