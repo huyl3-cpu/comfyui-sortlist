@@ -86,6 +86,9 @@ _safe_merge("value")
 from .set_value_with_path import NODE_CLASS_MAPPINGS as _m, NODE_DISPLAY_NAME_MAPPINGS as _n
 NODE_CLASS_MAPPINGS.update(_m)
 NODE_DISPLAY_NAME_MAPPINGS.update(_n)
+from .set_value_for_dancing import NODE_CLASS_MAPPINGS as _m2, NODE_DISPLAY_NAME_MAPPINGS as _n2
+NODE_CLASS_MAPPINGS.update(_m2)
+NODE_DISPLAY_NAME_MAPPINGS.update(_n2)
 
 _safe_merge("adaptive_resolution")
 
