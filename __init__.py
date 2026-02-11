@@ -98,6 +98,7 @@ _safe_merge("mp3_extract_image")
 _safe_merge("file_list_to_path")
 _safe_merge("fix_dimensions")
 _safe_merge("get_timestamp")
+_safe_merge("set_value_mc")
 _safe_merge("adaptive_resolution")
 
 _safe_merge("colab_nodes")
