@@ -8,13 +8,18 @@ class GetTimestamp:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "format": (["YYYYMMDD_HHMMSS", "YYYY-MM-DD_HH-MM-SS", "YYYYMMDD", "HHMMSS", "custom"], {
-                    "default": "YYYYMMDD_HHMMSS"
+                "format": (["YYYY-MM-DD_HH-MM-SS", "YYYYMMDD_HHMMSS", "YYYY-MM-DD", "HH-MM-SS", "custom"], {
+                    "default": "YYYY-MM-DD_HH-MM-SS"
                 }),
             },
             "optional": {
+                "prefix": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                    "placeholder": "video_",
+                }),
                 "custom_format": ("STRING", {
-                    "default": "%Y%m%d_%H%M%S",
+                    "default": "%Y-%m-%d_%H-%M-%S",
                     "multiline": False,
                 }),
             }
@@ -25,23 +30,23 @@ class GetTimestamp:
     FUNCTION = "get_timestamp"
     CATEGORY = "comfyui-sortlist"
 
-    def get_timestamp(self, format, custom_format="%Y%m%d_%H%M%S"):
+    def get_timestamp(self, format, prefix="", custom_format="%Y-%m-%d_%H-%M-%S"):
         now = datetime.now()
         
-        if format == "YYYYMMDD_HHMMSS":
-            result = now.strftime("%Y%m%d_%H%M%S")
-        elif format == "YYYY-MM-DD_HH-MM-SS":
+        if format == "YYYY-MM-DD_HH-MM-SS":
             result = now.strftime("%Y-%m-%d_%H-%M-%S")
-        elif format == "YYYYMMDD":
-            result = now.strftime("%Y%m%d")
-        elif format == "HHMMSS":
-            result = now.strftime("%H%M%S")
+        elif format == "YYYYMMDD_HHMMSS":
+            result = now.strftime("%Y%m%d_%H%M%S")
+        elif format == "YYYY-MM-DD":
+            result = now.strftime("%Y-%m-%d")
+        elif format == "HH-MM-SS":
+            result = now.strftime("%H-%M-%S")
         elif format == "custom":
             result = now.strftime(custom_format)
         else:
-            result = now.strftime("%Y%m%d_%H%M%S")
+            result = now.strftime("%Y-%m-%d_%H-%M-%S")
         
-        return (result,)
+        return (prefix + result,)
 
 
 NODE_CLASS_MAPPINGS = {
