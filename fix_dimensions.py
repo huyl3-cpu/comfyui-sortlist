@@ -30,9 +30,9 @@ class FixDimensions:
     CATEGORY = "comfyui-sortlist"
 
     def fix(self, width, height):
-        # Round to nearest multiple of 16
-        fixed_width = round(width / 16) * 16
-        fixed_height = round(height / 16) * 16
+        # Round DOWN to nearest multiple of 16
+        fixed_width = (width // 16) * 16
+        fixed_height = (height // 16) * 16
         
         # Ensure minimum of 64
         fixed_width = max(64, fixed_width)
