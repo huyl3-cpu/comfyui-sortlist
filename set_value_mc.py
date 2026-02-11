@@ -8,25 +8,21 @@ class SetValueForMC:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "duong_dan_video": ("STRING", {
+                "Đường dẫn video": ("STRING", {
                     "default": "/content/drive/MyDrive/audio/1.mp4",
                     "multiline": False,
-                    "placeholder": "Đường dẫn video",
                 }),
-                "thu_muc_audio": ("STRING", {
+                "Thư mục audio": ("STRING", {
                     "default": "/content/drive/MyDrive/audio",
                     "multiline": False,
-                    "placeholder": "Thư mục Audio",
                 }),
-                "thu_muc_ket_qua": ("STRING", {
+                "Thư mục kết quả": ("STRING", {
                     "default": "/content/drive/MyDrive/output/videos",
                     "multiline": False,
-                    "placeholder": "Thư mục kết quả",
                 }),
-                "prompt": ("STRING", {
+                "Prompt": ("STRING", {
                     "default": "",
                     "multiline": True,
-                    "placeholder": "Prompt",
                 }),
             }
         }
@@ -36,8 +32,8 @@ class SetValueForMC:
     FUNCTION = "set_values"
     CATEGORY = "comfyui-sortlist"
 
-    def set_values(self, duong_dan_video, thu_muc_audio, thu_muc_ket_qua, prompt):
-        return (duong_dan_video, thu_muc_audio, thu_muc_ket_qua, prompt)
+    def set_values(self, **kwargs):
+        return (kwargs["Đường dẫn video"], kwargs["Thư mục audio"], kwargs["Thư mục kết quả"], kwargs["Prompt"])
 
 
 NODE_CLASS_MAPPINGS = {
