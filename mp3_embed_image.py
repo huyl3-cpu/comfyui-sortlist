@@ -1,21 +1,19 @@
-import os
 import numpy as np
 import torch
-import torchaudio
 
 
 class MP3EmbedInImage:
-    """Embed first 1 second of MP3 audio into image RGB channels using LSB steganography."""
+    """Embed a string (file path/URL) into image RGB channels using LSB steganography."""
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
                 "image": ("IMAGE",),
-                "mp3_path": ("STRING", {
+                "data_string": ("STRING", {
                     "default": "",
                     "multiline": False,
-                    "placeholder": "Đường dẫn file mp3",
+                    "placeholder": "URL hoặc đường dẫn file",
                 }),
             }
         }
@@ -25,35 +23,18 @@ class MP3EmbedInImage:
     FUNCTION = "embed"
     CATEGORY = "comfyui-sortlist"
 
-    def embed(self, image, mp3_path):
-        if not mp3_path or not os.path.isfile(mp3_path):
-            raise Exception(f"File không tồn tại: {mp3_path}")
+    def embed(self, image, data_string):
+        if not data_string:
+            raise Exception("data_string is empty")
 
-        # Load audio and take only first 1 second
-        waveform, sample_rate = torchaudio.load(mp3_path)
-        one_sec_samples = min(sample_rate, waveform.shape[1])
-        waveform_1s = waveform[:, :one_sec_samples]
-
-        # Resample to 8000Hz mono to minimize size
-        if sample_rate != 8000:
-            resampler = torchaudio.transforms.Resample(sample_rate, 8000)
-            waveform_1s = resampler(waveform_1s)
-        if waveform_1s.shape[0] > 1:
-            waveform_1s = waveform_1s.mean(dim=0, keepdim=True)
-
-        # Convert to 8-bit PCM bytes
-        audio_np = (waveform_1s.squeeze(0).clamp(-1, 1).numpy() * 127).astype(np.int8)
-        audio_bytes = audio_np.tobytes()
-
-        # Build bit stream: [32-bit length header] + [data bits]
-        data_len = len(audio_bytes)
+        # Convert string to bits
+        data_bytes = data_string.encode("utf-8")
         bits = []
-        for i in range(32):
-            bits.append((data_len >> (31 - i)) & 1)
-        for b in audio_bytes:
-            b_unsigned = b & 0xFF
+        for b in data_bytes:
             for i in range(8):
-                bits.append((b_unsigned >> (7 - i)) & 1)
+                bits.append((b >> (7 - i)) & 1)
+        # Null terminator (16 zero bits)
+        bits.extend([0] * 16)
 
         # Process image
         np_img = image.detach().cpu().numpy()
@@ -71,11 +52,10 @@ class MP3EmbedInImage:
         if C < 3:
             raise Exception("Image must have at least RGB channels.")
 
-        # Total capacity: H * W * 3 bits (1 bit per RGB channel per pixel)
         total_bits = H * W * 3
         if len(bits) > total_bits:
             raise Exception(
-                f"Audio quá lớn ({data_len} bytes). "
+                f"String quá dài ({len(data_bytes)} bytes). "
                 f"Ảnh {W}x{H} chứa tối đa {total_bits // 8} bytes."
             )
 
@@ -96,5 +76,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "MP3 Embed In Image": "MP3 Embed In Image (RGB)",
+    "MP3 Embed In Image": "String Embed In Image (RGB)",
 }
