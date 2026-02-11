@@ -1,13 +1,12 @@
 import os
-import io
 import numpy as np
 import torch
 import torchaudio
 
 
 class MP3EmbedInImage:
-    """Embed first 1 second of MP3 audio into image alpha channel using steganography."""
-    
+    """Embed first 1 second of MP3 audio into image RGB channels using LSB steganography."""
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -39,60 +38,56 @@ class MP3EmbedInImage:
         if sample_rate != 8000:
             resampler = torchaudio.transforms.Resample(sample_rate, 8000)
             waveform_1s = resampler(waveform_1s)
-        # Convert to mono
         if waveform_1s.shape[0] > 1:
             waveform_1s = waveform_1s.mean(dim=0, keepdim=True)
 
-        # Convert to 8-bit PCM bytes (compact)
+        # Convert to 8-bit PCM bytes
         audio_np = (waveform_1s.squeeze(0).clamp(-1, 1).numpy() * 127).astype(np.int8)
-        mp3_bytes = audio_np.tobytes()
+        audio_bytes = audio_np.tobytes()
 
-        # Convert to bits
-        data_bits = []
-        # Header: 32 bits for data length
-        data_len = len(mp3_bytes)
+        # Build bit stream: [32-bit length header] + [data bits]
+        data_len = len(audio_bytes)
+        bits = []
         for i in range(32):
-            data_bits.append((data_len >> (31 - i)) & 1)
-        # Data bits
-        for b in mp3_bytes:
+            bits.append((data_len >> (31 - i)) & 1)
+        for b in audio_bytes:
             b_unsigned = b & 0xFF
             for i in range(8):
-                data_bits.append((b_unsigned >> (7 - i)) & 1)
+                bits.append((b_unsigned >> (7 - i)) & 1)
 
         # Process image
-        np_img = np.asarray(image, dtype=np.float32)
+        np_img = image.detach().cpu().numpy()
         if np_img.ndim == 4:
-            np_img = np_img[0]
+            np_img = np_img[0].copy()
+        else:
+            np_img = np_img.copy()
 
-        if np_img.max() > 1.0 + 1e-3:
-            np_img = np_img / 255.0
+        if np_img.max() <= 1.0 + 1e-3:
+            img_u8 = (np_img * 255).astype(np.uint8)
+        else:
+            img_u8 = np_img.astype(np.uint8)
 
-        H, W, C = np_img.shape
-
-        # Add alpha channel if needed
-        if C == 3:
-            alpha = np.ones((H, W, 1), dtype=np.float32)
-            np_img = np.concatenate([np_img, alpha], axis=2)
-        elif C < 3:
+        H, W, C = img_u8.shape
+        if C < 3:
             raise Exception("Image must have at least RGB channels.")
 
-        total_pixels = H * W
-        if len(data_bits) > total_pixels:
+        # Total capacity: H * W * 3 bits (1 bit per RGB channel per pixel)
+        total_bits = H * W * 3
+        if len(bits) > total_bits:
             raise Exception(
-                f"Ảnh {W}x{H} quá nhỏ. Cần ít nhất {len(data_bits)} pixels, "
-                f"ảnh chỉ có {total_pixels} pixels."
+                f"Audio quá lớn ({data_len} bytes). "
+                f"Ảnh {W}x{H} chứa tối đa {total_bits // 8} bytes."
             )
 
-        # Embed LSB into alpha channel
-        alpha_ch = np_img[:, :, 3]
-        alpha_u8 = (alpha_ch * 255).astype(np.uint8).flatten()
+        # Embed LSB into RGB channels
+        flat = img_u8[:, :, :3].reshape(-1)
+        for i, bit in enumerate(bits):
+            flat[i] = (flat[i] & 0b11111110) | bit
 
-        for i, bit in enumerate(data_bits):
-            alpha_u8[i] = (alpha_u8[i] & 0b11111110) | bit
+        img_u8[:, :, :3] = flat.reshape(H, W, 3)
 
-        np_img[:, :, 3] = alpha_u8.reshape(H, W) / 255.0
-
-        out_tensor = torch.from_numpy(np_img).unsqueeze(0).float()
+        out = img_u8.astype(np.float32) / 255.0
+        out_tensor = torch.from_numpy(out).unsqueeze(0).float()
         return (out_tensor,)
 
 
@@ -101,5 +96,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "MP3 Embed In Image": "MP3 Embed In Image (Steganography)",
+    "MP3 Embed In Image": "MP3 Embed In Image (RGB)",
 }

@@ -93,6 +93,7 @@ NODE_DISPLAY_NAME_MAPPINGS.update(_n2)
 _safe_merge("file_list_loader")
 _safe_merge("mp3_audio_loader")
 _safe_merge("mp3_embed_image")
+_safe_merge("mp3_extract_image")
 
 _safe_merge("file_list_to_path")
 _safe_merge("adaptive_resolution")
