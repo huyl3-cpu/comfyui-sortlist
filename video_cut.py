@@ -15,6 +15,9 @@ class VideoCutToSegments:
                 "use_gpu": ("BOOLEAN", {"default": True}),
                 "accurate_cut": ("BOOLEAN", {"default": True}),
                 "parallel_workers": ("INT", {"default": 4, "min": 1, "max": 16}),
+            },
+            "optional": {
+                "fps_override": ("FLOAT", {"default": 0, "min": 0, "max": 120, "step": 0.01}),
             }
         }
 
@@ -164,7 +167,7 @@ class VideoCutToSegments:
             
             return None, f"Command '{' '.join(cmd)[:100]}...' returned non-zero exit status {e.returncode}.\nError: {error_msg[:300]}..."
 
-    def cut_video(self, video_url, segment_duration, output_prefix, resolution, use_gpu, accurate_cut, parallel_workers):
+    def cut_video(self, video_url, segment_duration, output_prefix, resolution, use_gpu, accurate_cut, parallel_workers, fps_override=0):
         video_url = video_url.strip()
         
         if not os.path.isfile(video_url):
@@ -197,6 +200,10 @@ class VideoCutToSegments:
         except Exception as e:
             return (f"ERROR: Failed to get video FPS -> {str(e)}",)
         
+        # Use fps_override if specified
+        if fps_override > 0:
+            fps = fps_override
+        
         duration_cmd = [
             "ffprobe",
             "-v", "error",
@@ -211,7 +218,13 @@ class VideoCutToSegments:
         except Exception as e:
             return (f"ERROR: Failed to get video duration -> {str(e)}",)
         
-        frames_per_segment = int(segment_duration * fps)
+        # New formula: frames = seconds × (fps/3) + 1 (following 4n+1 pattern)
+        frames_per_segment_raw = segment_duration * (fps / 3) + 1
+        # Ensure 4n+1 pattern
+        frames_per_segment = int(frames_per_segment_raw)
+        if (frames_per_segment - 1) % 4 != 0:
+            frames_per_segment = ((frames_per_segment - 1) // 4) * 4 + 1
+        
         total_frames = int(total_duration * fps)
         num_segments = math.ceil(total_frames / frames_per_segment)
         
