@@ -237,8 +237,12 @@ class VideoCutToSegments:
         except Exception as e:
             return (f"ERROR: Failed to get video duration -> {str(e)}",)
         
-        # Formula: frames = seconds × fps + 1
-        frames_per_segment = int(segment_duration * fps + 1)
+        # Formula: frames = seconds × fps + 1, enforced to 4n+1 pattern
+        frames_raw = int(segment_duration * fps + 1)
+        # Ensure 4n+1 pattern: round up to nearest 4n+1
+        frames_per_segment = ((frames_raw - 1 + 3) // 4) * 4 + 1
+        
+        print(f"[DEBUG] Frame calculation: raw={frames_raw} → enforced 4n+1={frames_per_segment}")
         
         # Calculate total frames using the FPS we're cutting at (not original FPS)
         # This simulates converting video to target FPS before cutting
