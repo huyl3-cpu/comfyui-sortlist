@@ -38,6 +38,9 @@ class VideoCutToSegments:
     def _cut_single_segment(args):
         video_url, start_time, num_frames, output_path, use_gpu, accurate_cut, fps, resolution = args
         
+        # Calculate audio duration from frames for audio stream sync
+        audio_duration = num_frames / fps
+        
         # Get scale filter if resolution is specified
         scale_filter = None
         if resolution != "original" and resolution in VideoCutToSegments.RESOLUTION_MAP:
@@ -77,6 +80,7 @@ class VideoCutToSegments:
                 "-bufsize", "20M",
                 "-c:a", "aac",
                 "-b:a", "128k",
+                "-t", str(audio_duration),
                 "-avoid_negative_ts", "1",
                 "-max_muxing_queue_size", "9999",
                 "-movflags", "+faststart",
@@ -148,6 +152,7 @@ class VideoCutToSegments:
                     "-threads", "0",
                     "-c:a", "aac",
                     "-b:a", "128k",
+                    "-t", str(audio_duration),
                     "-avoid_negative_ts", "1",
                     "-movflags", "+faststart",
                     output_path
