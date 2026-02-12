@@ -118,13 +118,12 @@ class VHS_VideoFrameGuard:
 
             fps_used = float(force_rate_fps) if force_rate_fps and float(force_rate_fps) > 0 else (fps_meta or 30.0)
 
-            # Estimate frames:
-            # Prefer duration if available, else fallback nb_frames, else unknown -> assume fail-safe
-            if dur is not None and dur > 0:
-                est_frames = int(math.ceil(dur * fps_used))
-            elif nb_frames is not None:
-                # if no duration, use nb_frames (but if force_rate differs, still clamp by nb_frames)
+            # Get actual frame count from video
+            # Priority: nb_frames (most accurate) > calculate from duration * fps
+            if nb_frames is not None and nb_frames > 0:
                 est_frames = int(nb_frames)
+            elif dur is not None and dur > 0:
+                est_frames = int(math.ceil(dur * fps_used))
             else:
                 est_frames = max_frames + 1  # fail-safe: treat as too long
 
@@ -132,7 +131,7 @@ class VHS_VideoFrameGuard:
             status = "OK" if ok else "OVER"
 
             report_lines.append(
-                f"{status} | frames={est_frames} | fps_used={fps_used:.3f} | dur={dur if dur is not None else 'NA'} | {p}"
+                f"{status} | frames={est_frames} | fps_used={fps_used:.3f} | dur={dur:.3f if dur is not None else 'NA'} | {p}"
             )
 
             if ok:
