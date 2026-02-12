@@ -223,6 +223,8 @@ class VideoCutToSegments:
         # Formula: frames = seconds × fps + 1
         frames_per_segment = int(segment_duration * fps + 1)
         
+        # Calculate total frames using the FPS we're cutting at (not original FPS)
+        # This simulates converting video to target FPS before cutting
         total_frames = int(total_duration * fps)
         num_segments = math.ceil(total_frames / frames_per_segment)
         
