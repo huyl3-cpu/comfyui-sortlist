@@ -218,12 +218,8 @@ class VideoCutToSegments:
         except Exception as e:
             return (f"ERROR: Failed to get video duration -> {str(e)}",)
         
-        # New formula: frames = seconds × (fps/3) + 1 (following 4n+1 pattern)
-        frames_per_segment_raw = segment_duration * (fps / 3) + 1
-        # Ensure 4n+1 pattern
-        frames_per_segment = int(frames_per_segment_raw)
-        if (frames_per_segment - 1) % 4 != 0:
-            frames_per_segment = ((frames_per_segment - 1) // 4) * 4 + 1
+        # Formula: frames = seconds × fps + 1
+        frames_per_segment = int(segment_duration * fps + 1)
         
         total_frames = int(total_duration * fps)
         num_segments = math.ceil(total_frames / frames_per_segment)
