@@ -61,9 +61,14 @@ class VideoCutToSegments:
                 "-vframes", str(num_frames),
             ]
             
-            # Add scale filter if specified (need to download from GPU first)
+            # Add scale and fps filters
+            filters = []
             if scale_filter:
-                cmd.extend(["-vf", f"hwdownload,format=nv12,{scale_filter},format=yuv420p"])
+                filters.append(f"hwdownload,format=nv12,{scale_filter},format=yuv420p")
+            filters.append(f"fps={fps}")
+            
+            if filters:
+                cmd.extend(["-vf", ",".join(filters)])
             
             cmd.extend([
                 "-c:v", "h264_nvenc",
@@ -97,9 +102,12 @@ class VideoCutToSegments:
                 "-t", str(audio_duration),
             ]
             
-            # Add scale filter if specified
+            # Add scale and fps filters
+            filters = []
             if scale_filter:
-                cmd.extend(["-vf", scale_filter])
+                filters.append(scale_filter)
+            filters.append(f"fps={fps}")
+            cmd.extend(["-vf", ",".join(filters)])
             
             cmd.extend([
                 "-c:v", "libx264",
@@ -138,9 +146,12 @@ class VideoCutToSegments:
                     "-vframes", str(num_frames),
                 ]
                 
-                # Add scale filter if specified
+                # Add scale and fps filters
+                filters = []
                 if scale_filter:
-                    cpu_cmd.extend(["-vf", scale_filter])
+                    filters.append(scale_filter)
+                filters.append(f"fps={fps}")
+                cpu_cmd.extend(["-vf", ",".join(filters)])
                 
                 cpu_cmd.extend([
                     "-c:v", "libx264",
