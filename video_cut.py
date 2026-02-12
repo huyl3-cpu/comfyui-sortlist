@@ -38,8 +38,6 @@ class VideoCutToSegments:
     def _cut_single_segment(args):
         video_url, start_time, num_frames, output_path, use_gpu, accurate_cut, fps, resolution = args
         
-        audio_duration = num_frames / fps
-        
         # Get scale filter if resolution is specified
         scale_filter = None
         if resolution != "original" and resolution in VideoCutToSegments.RESOLUTION_MAP:
@@ -58,7 +56,6 @@ class VideoCutToSegments:
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
                 "-vframes", str(num_frames),
-                "-t", str(audio_duration),
             ]
             
             # Add scale filter if specified (need to download from GPU first)
@@ -134,7 +131,6 @@ class VideoCutToSegments:
                     "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                     "-i", video_url,
                     "-vframes", str(num_frames),
-                    "-t", str(audio_duration),
                 ]
                 
                 # Add scale filter if specified
