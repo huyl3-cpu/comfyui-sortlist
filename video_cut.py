@@ -80,7 +80,7 @@ class VideoCutToSegments:
                 "-bufsize", "20M",
                 "-c:a", "aac",
                 "-b:a", "128k",
-                "-t", str(audio_duration),
+                "-shortest",
                 "-avoid_negative_ts", "1",
                 "-max_muxing_queue_size", "9999",
                 "-movflags", "+faststart",
@@ -112,6 +112,7 @@ class VideoCutToSegments:
                 "-threads", "0",
                 "-c:a", "aac",
                 "-b:a", "128k",
+                "-shortest",
                 "-avoid_negative_ts", "1",
                 "-movflags", "+faststart",
                 output_path
@@ -152,7 +153,7 @@ class VideoCutToSegments:
                     "-threads", "0",
                     "-c:a", "aac",
                     "-b:a", "128k",
-                    "-t", str(audio_duration),
+                    "-shortest",
                     "-avoid_negative_ts", "1",
                     "-movflags", "+faststart",
                     output_path
