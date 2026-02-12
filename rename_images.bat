@@ -10,10 +10,31 @@ echo.
 REM Check if ffmpeg is available (for conversion)
 where ffmpeg >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: ffmpeg not found in PATH!
-    echo Please install ffmpeg or add it to PATH.
-    pause
-    exit /b 1
+    echo FFmpeg not found! Running auto-installer...
+    echo.
+    
+    REM Check if setup script exists in same directory
+    if exist "%~dp0setup_ffmpeg.bat" (
+        call "%~dp0setup_ffmpeg.bat"
+        
+        REM Refresh PATH from registry
+        set "FFMPEG_BIN=%USERPROFILE%\ffmpeg\bin"
+        set "PATH=%PATH%;!FFMPEG_BIN!"
+        
+        REM Try again
+        where ffmpeg >nul 2>&1
+        if !errorlevel! neq 0 (
+            echo.
+            echo ERROR: Please restart CMD and run this script again.
+            pause
+            exit /b 1
+        )
+    ) else (
+        echo ERROR: setup_ffmpeg.bat not found!
+        echo Please download it from the repository.
+        pause
+        exit /b 1
+    )
 )
 
 REM Counter
