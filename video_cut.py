@@ -41,6 +41,8 @@ class VideoCutToSegments:
         # Calculate audio duration from frames for audio stream sync
         audio_duration = num_frames / fps
         
+        print(f"[DEBUG] Cutting segment | fps={fps} | frames={num_frames} | start={start_time:.2f}s | output={output_path}")
+        
         # Get scale filter if resolution is specified
         scale_filter = None
         if resolution != "original" and resolution in VideoCutToSegments.RESOLUTION_MAP:
@@ -216,7 +218,10 @@ class VideoCutToSegments:
         
         # Use fps_override if specified
         if fps_override > 0:
+            print(f"[DEBUG] FPS override: {fps_override} (original FPS: {fps})")
             fps = fps_override
+        else:
+            print(f"[DEBUG] Using detected FPS: {fps} (no override)")
         
         duration_cmd = [
             "ffprobe",
