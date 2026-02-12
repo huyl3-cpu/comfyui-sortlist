@@ -95,7 +95,7 @@ class VHS_VideoFrameGuard:
             "required": {
                 "paths": ("STRING", {"multiline": True, "default": ""}),
                 "force_rate_fps": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 240.0, "step": 0.1}),
-                "max_frames": ("FLOAT", {"default": 210.0, "min": 1.0, "max": 100000.0, "step": 1.0}),
+                "max_frames": ("INT", {"default": 210, "min": 1, "max": 100000, "step": 1}),
                 "raise_on_fail": ("BOOLEAN", {"default": True}),
             }
         }
