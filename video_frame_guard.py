@@ -131,7 +131,7 @@ class VHS_VideoFrameGuard:
             status = "OK" if ok else "OVER"
 
             report_lines.append(
-                f"{status} | frames={est_frames} | fps_used={fps_used:.3f} | dur={dur:.3f if dur is not None else 'NA'} | {p}"
+                f"{status} | frames={est_frames} | fps_used={fps_used:.3f} | dur={f'{dur:.3f}' if dur is not None else 'NA'} | {p}"
             )
 
             if ok:
