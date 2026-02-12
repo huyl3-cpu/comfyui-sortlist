@@ -61,14 +61,15 @@ class VideoCutToSegments:
                 "-vframes", str(num_frames),
             ]
             
-            # Add scale and fps filters
-            filters = []
+            # Add filters - fps filter must be separate from hwdownload chain
+            vf_filters = []
             if scale_filter:
-                filters.append(f"hwdownload,format=nv12,{scale_filter},format=yuv420p")
-            filters.append(f"fps={fps}")
+                vf_filters.append(f"hwdownload,format=nv12,{scale_filter},format=yuv420p")
+            else:
+                vf_filters.append("hwdownload,format=nv12,format=yuv420p")
+            vf_filters.append(f"fps={fps}")
             
-            if filters:
-                cmd.extend(["-vf", ",".join(filters)])
+            cmd.extend(["-vf", ",".join(vf_filters)])
             
             cmd.extend([
                 "-c:v", "h264_nvenc",
