@@ -104,4 +104,5 @@ _safe_merge("set_value_mc_i2v")
 _safe_merge("adaptive_resolution")
 
 _safe_merge("clear_folder")
+_safe_merge("clear_folder_pattern")
 _safe_merge("colab_nodes")
