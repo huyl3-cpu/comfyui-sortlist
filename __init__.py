@@ -102,6 +102,7 @@ _safe_merge("get_timestamp")
 _safe_merge("set_value_mc")
 _safe_merge("set_value_mc_v2v")
 _safe_merge("set_value_mc_i2v")
+_safe_merge("set_value_mc_i2v_v2")
 _safe_merge("adaptive_resolution")
 
 _safe_merge("clear_folder")
