@@ -1,7 +1,7 @@
 class SetValueForMC_I2V_V2:
     """
     Set configuration values for MC I2V V2 workflow.
-    Includes: audio path (string), Vietnamese motion prompt, result folder, prompt, and license_key.
+    Includes: audio path, result folder, Vietnamese motion prompt, and license_key.
     """
 
     @classmethod
@@ -13,18 +13,14 @@ class SetValueForMC_I2V_V2:
                     "multiline": False,
                     "placeholder": "Đường dẫn file audio (.mp3/.wav)",
                 }),
-                "Prompt cử động tiếng việt": ("STRING", {
-                    "default": "",
-                    "multiline": True,
-                    "placeholder": "Mô tả cử động bằng tiếng Việt",
-                }),
                 "Thư mục kết quả": ("STRING", {
                     "default": "/content/drive/MyDrive/output/videos",
                     "multiline": False,
                 }),
-                "Prompt": ("STRING", {
+                "Prompt cử động tiếng việt": ("STRING", {
                     "default": "",
                     "multiline": True,
+                    "placeholder": "Mô tả cử động bằng tiếng Việt",
                 }),
                 "license_key": ("STRING", {
                     "default": "",
@@ -33,17 +29,16 @@ class SetValueForMC_I2V_V2:
             }
         }
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("audio_path", "motion_prompt_vi", "save_videos", "prompt", "license_key")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("audio_path", "save_videos", "motion_prompt_vi", "license_key")
     FUNCTION = "set_values"
     CATEGORY = "comfyui-sortlist"
 
     def set_values(self, **kwargs):
         return (
             kwargs["Đường dẫn audio"],
-            kwargs["Prompt cử động tiếng việt"],
             kwargs["Thư mục kết quả"],
-            kwargs["Prompt"],
+            kwargs["Prompt cử động tiếng việt"],
             kwargs["license_key"],
         )
 
