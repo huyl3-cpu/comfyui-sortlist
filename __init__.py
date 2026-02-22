@@ -94,6 +94,7 @@ _safe_merge("file_list_loader")
 _safe_merge("mp3_audio_loader")
 _safe_merge("mp3_embed_image")
 _safe_merge("mp3_extract_image")
+_safe_merge("split_mp3")
 
 _safe_merge("file_list_to_path")
 _safe_merge("fix_dimensions")
