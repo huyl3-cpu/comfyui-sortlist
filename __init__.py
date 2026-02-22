@@ -108,4 +108,5 @@ _safe_merge("adaptive_resolution")
 
 _safe_merge("clear_folder")
 _safe_merge("clear_folder_pattern")
+_safe_merge("remove_first_line")
 _safe_merge("colab_nodes")
