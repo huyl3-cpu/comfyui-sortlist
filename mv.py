@@ -26,7 +26,14 @@ class MoveFile:
         os.makedirs(target_dir, exist_ok=True)
 
         filename = os.path.basename(source_path)
+        name, ext = os.path.splitext(filename)
         new_path = os.path.join(target_dir, filename)
+
+        # Nếu file đã tồn tại, thêm hậu tố _1, _2, _3...
+        counter = 1
+        while os.path.exists(new_path):
+            new_path = os.path.join(target_dir, f"{name}_{counter}{ext}")
+            counter += 1
 
         try:
             shutil.move(source_path, new_path)
