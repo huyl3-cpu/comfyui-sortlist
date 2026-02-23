@@ -359,8 +359,8 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SimpleForLoopStart": "Simple For Loop Start",
-    "SimpleForLoopEnd": "Simple For Loop End",
+    "SimpleForLoopStart": "Simple For Loop Start A100",
+    "SimpleForLoopEnd": "Simple For Loop End A100",
     "SimpleWhileOpen": "Simple While Open",
     "SimpleWhileClose": "Simple While Close",
     "_LoopAdd": "_Loop Add (internal)",
