@@ -38,18 +38,20 @@ class CollectFiles:
     def collect(self, text, pattern, dest_folder):
         os.makedirs(dest_folder, exist_ok=True)
 
-        # Xử lý input: có thể là list hoặc string
-        if isinstance(text, list):
-            lines = []
-            for item in text:
-                if isinstance(item, str):
-                    lines.append(item.strip())
-                elif isinstance(item, (list, tuple)):
-                    for sub in item:
-                        if isinstance(sub, str):
-                            lines.append(sub.strip())
-        else:
-            lines = [l.strip() for l in text.strip().split("\n")]
+        # Đệ quy flatten mọi cấu trúc lồng nhau để lấy tất cả string
+        def flatten(obj):
+            results = []
+            if isinstance(obj, str):
+                for line in obj.strip().split("\n"):
+                    line = line.strip().strip('",\'')
+                    if line:
+                        results.append(line)
+            elif isinstance(obj, (list, tuple)):
+                for item in obj:
+                    results.extend(flatten(item))
+            return results
+
+        lines = flatten(text)
         matched = []
         for line in lines:
             clean = line.strip().strip('",').strip("'")
