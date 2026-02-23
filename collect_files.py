@@ -38,8 +38,18 @@ class CollectFiles:
     def collect(self, text, pattern, dest_folder):
         os.makedirs(dest_folder, exist_ok=True)
 
-        # Lọc các dòng chứa pattern
-        lines = text.strip().split("\n")
+        # Xử lý input: có thể là list hoặc string
+        if isinstance(text, list):
+            lines = []
+            for item in text:
+                if isinstance(item, str):
+                    lines.append(item.strip())
+                elif isinstance(item, (list, tuple)):
+                    for sub in item:
+                        if isinstance(sub, str):
+                            lines.append(sub.strip())
+        else:
+            lines = [l.strip() for l in text.strip().split("\n")]
         matched = []
         for line in lines:
             clean = line.strip().strip('",').strip("'")
