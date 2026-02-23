@@ -283,7 +283,7 @@ class _LoopLessThan:
     CATEGORY = "comfyui-sortlist/flow"
 
     def compare(self, a, b):
-        return (a < b,)
+        return (a <= b,)
 
 
 class SimpleForLoopEnd:
