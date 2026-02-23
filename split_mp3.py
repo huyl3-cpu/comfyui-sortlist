@@ -62,8 +62,7 @@ class SplitMP3Node:
         duration = self._get_duration(mp3_path)
         threshold = 420  # 7 phút = 420 giây
 
-        print(f"[SplitMP3] File: {mp3_path}")
-        print(f"[SplitMP3] Độ dài: {duration:.1f}s ({duration/60:.1f} phút)")
+
 
         if duration < threshold:
             # < 7 phút → cắt thành 2 phần bằng nhau
@@ -72,7 +71,7 @@ class SplitMP3Node:
                 (0, half),
                 (half, duration - half),
             ]
-            print(f"[SplitMP3] < 7 phút → cắt 2 phần, mỗi phần ~{half:.1f}s")
+
         else:
             # >= 7 phút → cắt mỗi file 7 phút (420s)
             segment_duration = threshold
@@ -87,9 +86,7 @@ class SplitMP3Node:
             if remainder > 0.5:  # bỏ qua nếu quá ngắn (<0.5s)
                 segments.append((num_full * segment_duration, remainder))
 
-            print(f"[SplitMP3] >= 7 phút → cắt {len(segments)} phần"
-                  f" ({num_full}x{segment_duration}s"
-                  f"{f' + {remainder:.1f}s' if remainder > 0.5 else ''})")
+
 
         # Thực hiện cắt bằng ffmpeg
         output_files = []
@@ -109,11 +106,8 @@ class SplitMP3Node:
                 print(f"[SplitMP3] ⚠️ Lỗi cắt phần {idx}: {result.stderr[-200:]}")
             else:
                 output_files.append(out_file)
-                size_kb = os.path.getsize(out_file) // 1024
-                print(f"[SplitMP3] ✅ Phần {idx}: {out_file} ({size_kb}KB)")
 
-        print(f"[SplitMP3] Hoàn thành: {len(output_files)}/{len(segments)} file")
-        print(f"[SplitMP3] Thư mục output: {output_dir}")
+
 
         return (output_dir,)
 
