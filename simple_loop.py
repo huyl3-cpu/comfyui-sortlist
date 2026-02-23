@@ -10,7 +10,7 @@ Nodes:
 """
 
 from comfy_execution.graph_utils import GraphBuilder, is_link
-import comfy.graph_utils
+from comfy_execution.graph import ExecutionBlocker
 
 try:
     from nodes import NODE_CLASS_MAPPINGS as ALL_NODE_CLASS_MAPPINGS
@@ -51,7 +51,7 @@ class SimpleWhileOpen:
             if condition:
                 values.append(kwargs.get("initial_value%d" % i, None))
             else:
-                values.append(comfy.graph_utils.ExecutionBlocker(None))
+                values.append(ExecutionBlocker(None))
         return tuple(["stub"] + values)
 
 
@@ -228,8 +228,8 @@ class SimpleForLoopStart:
         if not is_recursion:
             if uid not in _LOOP_INITIAL_DONE:
                 _LOOP_INITIAL_DONE.add(uid)
-                outputs = [comfy.graph_utils.ExecutionBlocker(None)] * (MAX_FLOW_NUM - 1)
-                return tuple(["stub", comfy.graph_utils.ExecutionBlocker(None)] + outputs)
+                outputs = [ExecutionBlocker(None)] * (MAX_FLOW_NUM - 1)
+                return tuple(["stub", ExecutionBlocker(None)] + outputs)
             else:
                 _LOOP_INITIAL_DONE.discard(uid)
         else:
