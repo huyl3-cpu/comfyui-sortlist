@@ -88,9 +88,24 @@ class SplitMP3Node:
 
 
 
-        # Thực hiện cắt bằng ffmpeg
+        # Tạo file 1 giây đầu tiên (preview)
+        preview_file = os.path.join(output_dir, f"{base_name}_001.mp3")
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", mp3_path,
+            "-ss", "0",
+            "-t", "1",
+            "-c", "copy",
+            "-avoid_negative_ts", "make_zero",
+            preview_file,
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
         output_files = []
-        for idx, (start, dur) in enumerate(segments, start=1):
+        if result.returncode == 0:
+            output_files.append(preview_file)
+
+        # Thực hiện cắt các segment chính (bắt đầu từ _002)
+        for idx, (start, dur) in enumerate(segments, start=2):
             out_file = os.path.join(output_dir, f"{base_name}_{idx:03d}.mp3")
             cmd = [
                 "ffmpeg", "-y",
@@ -106,8 +121,6 @@ class SplitMP3Node:
                 print(f"[SplitMP3] ⚠️ Lỗi cắt phần {idx}: {result.stderr[-200:]}")
             else:
                 output_files.append(out_file)
-
-
 
         return (output_dir,)
 
