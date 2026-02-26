@@ -60,7 +60,7 @@ class SplitMP3Node:
 
         # Lấy độ dài
         duration = self._get_duration(mp3_path)
-        threshold = 420  # 7 phút = 420 giây
+        threshold = 270  # 4 phút 30 giây = 270 giây
 
 
 
