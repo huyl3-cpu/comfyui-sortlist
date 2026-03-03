@@ -33,17 +33,6 @@ class SetValuesFromPanel:
                     "display_name": "Đường dẫn thư mục chuyển đổi",
                 }),
 
-                "type_audio": ("INT", {
-                    "default": 0,
-                    "label": "Kiểu âm thanh",
-                    "display_name": "Kiểu âm thanh",
-                }),
-
-                "license_key": ("STRING", {
-                    "default": "",
-                    "label": "License_key",
-                    "display_name": "License_key",
-                }),
             }
         }
 
@@ -53,8 +42,6 @@ class SetValuesFromPanel:
         "STRING",
         "STRING",
         "STRING",
-        "INT",
-        "STRING",
     )
 
     RETURN_NAMES = (
@@ -63,8 +50,6 @@ class SetValuesFromPanel:
         "file_name",
         "save_path",
         "convert_folder",
-        "type_audio",
-        "license_key",
     )
 
     FUNCTION = "execute"
@@ -77,8 +62,6 @@ class SetValuesFromPanel:
         file_name,
         save_path,
         convert_folder,
-        type_audio,
-        license_key,
     ):
         return (
             stt,
@@ -86,8 +69,6 @@ class SetValuesFromPanel:
             file_name,
             save_path,
             convert_folder,
-            type_audio,
-            license_key,
         )
 
 
