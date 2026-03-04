@@ -211,30 +211,12 @@ class SimpleForLoopStart:
     CATEGORY = "comfyui-sortlist/flow"
 
     def for_loop_start(self, total, unique_id=None, **kwargs):
-        global _LOOP_INITIAL_DONE
         graph = GraphBuilder()
 
-        i = 1
+        i = 0
         is_recursion = "initial_value0" in kwargs
         if is_recursion:
             i = kwargs["initial_value0"]
-
-        uid = str(unique_id) if unique_id else "default"
-
-        # ── Dedup fix ──
-        # ComfyUI calls for_loop_start TWICE with same uid:
-        #   Call 1 = pre-evaluation → BLOCK
-        #   Call 2 = real call → create expand graph
-        if not is_recursion:
-            if uid not in _LOOP_INITIAL_DONE:
-                _LOOP_INITIAL_DONE.add(uid)
-                outputs = [ExecutionBlocker(None)] * (MAX_FLOW_NUM - 1)
-                return tuple(["stub", ExecutionBlocker(None)] + outputs)
-            else:
-                _LOOP_INITIAL_DONE.discard(uid)
-        else:
-            base_uid = uid.split(".")[-1] if "." in uid else uid
-            _LOOP_INITIAL_DONE.discard(base_uid)
 
         # Create expand graph with SimpleWhileOpen
         initial_values = {
@@ -283,7 +265,7 @@ class _LoopLessThan:
     CATEGORY = "comfyui-sortlist/flow"
 
     def compare(self, a, b):
-        return (a <= b,)
+        return (a < b,)
 
 
 class SimpleForLoopEnd:
