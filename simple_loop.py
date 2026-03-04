@@ -214,7 +214,7 @@ class SimpleForLoopStart:
         global _LOOP_INITIAL_DONE
         graph = GraphBuilder()
 
-        i = 0
+        i = 1
         is_recursion = "initial_value0" in kwargs
         if is_recursion:
             i = kwargs["initial_value0"]
@@ -283,7 +283,7 @@ class _LoopLessThan:
     CATEGORY = "comfyui-sortlist/flow"
 
     def compare(self, a, b):
-        return (a < b,)
+        return (a <= b,)
 
 
 class SimpleForLoopEnd:
