@@ -60,7 +60,7 @@ class VideoCutToSegments:
                 "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-frames:v", str(num_frames),  # Use -frames:v instead of -vframes for clarity
+                "-vframes", str(num_frames),
             ]
             
             # Add filters - fps filter must be separate from hwdownload chain
@@ -79,7 +79,7 @@ class VideoCutToSegments:
                 "-tune", "hq",
                 "-profile:v", "high",
                 "-pix_fmt", "yuv420p",
-                "-vsync", "passthrough",  # Changed from cfr to passthrough for exact frames
+                "-vsync", "cfr",
                 "-r", str(fps),
                 "-rc", "vbr",
                 "-cq", "23",
@@ -88,7 +88,7 @@ class VideoCutToSegments:
                 "-bufsize", "20M",
                 "-c:a", "aac",
                 "-b:a", "128k",
-                # Removed -shortest as it conflicts with exact frame count
+                "-shortest",
                 "-avoid_negative_ts", "1",
                 "-max_muxing_queue_size", "9999",
                 "-movflags", "+faststart",
@@ -101,7 +101,8 @@ class VideoCutToSegments:
                 "-ss", str(start_time),
                 "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                 "-i", video_url,
-                "-frames:v", str(num_frames),
+                "-vframes", str(num_frames),
+                "-t", str(audio_duration),
             ]
             
             # Add scale and fps filters
@@ -117,12 +118,12 @@ class VideoCutToSegments:
                 "-tune", "zerolatency",
                 "-profile:v", "high",
                 "-pix_fmt", "yuv420p",
-                "-vsync", "passthrough",
+                "-vsync", "cfr",
                 "-r", str(fps),
                 "-threads", "0",
                 "-c:a", "aac",
                 "-b:a", "128k",
-                # Removed -shortest
+                "-shortest",
                 "-avoid_negative_ts", "1",
                 "-movflags", "+faststart",
                 output_path
@@ -145,7 +146,7 @@ class VideoCutToSegments:
                     "-ss", str(start_time),
                     "-accurate_seek" if accurate_cut else "-noaccurate_seek",
                     "-i", video_url,
-                    "-frames:v", str(num_frames),
+                    "-vframes", str(num_frames),
                 ]
                 
                 # Add scale and fps filters
@@ -161,12 +162,12 @@ class VideoCutToSegments:
                     "-tune", "zerolatency",
                     "-profile:v", "high",
                     "-pix_fmt", "yuv420p",
-                    "-vsync", "passthrough",
+                    "-vsync", "cfr",
                     "-r", str(fps),
                     "-threads", "0",
                     "-c:a", "aac",
                     "-b:a", "128k",
-                    # Removed -shortest
+                    "-shortest",
                     "-avoid_negative_ts", "1",
                     "-movflags", "+faststart",
                     output_path
