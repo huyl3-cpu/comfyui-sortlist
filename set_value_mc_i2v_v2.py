@@ -13,11 +13,6 @@ class SetValueForMC_I2V_V2:
                     "multiline": False,
                     "placeholder": "Đường dẫn file audio (.mp3/.wav)",
                 }),
-                "Đường dẫn thư mục lưu": ("STRING", {
-                    "default": "",
-                    "multiline": False,
-                    "placeholder": "Đường dẫn thư mục lưu kết quả",
-                }),
                 "Prompt cử động tiếng việt": ("STRING", {
                     "default": "",
                     "multiline": True,
@@ -26,15 +21,14 @@ class SetValueForMC_I2V_V2:
             }
         }
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING")
-    RETURN_NAMES = ("audio_path", "save_folder", "motion_prompt_vi")
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("audio_path", "motion_prompt_vi")
     FUNCTION = "set_values"
     CATEGORY = "comfyui-sortlist"
 
     def set_values(self, **kwargs):
         return (
             kwargs["Đường dẫn audio"],
-            kwargs["Đường dẫn thư mục lưu"],
             kwargs["Prompt cử động tiếng việt"],
         )
 
