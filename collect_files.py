@@ -66,8 +66,8 @@ class CollectFiles:
                     continue
                 matched.append(clean)
 
-        # Copy từng file vào thư mục đích
-        copied = []
+        # Move từng file vào thư mục đích
+        moved = []
         for src in matched:
             basename = os.path.basename(src)
             dest = os.path.join(dest_folder, basename)
@@ -78,10 +78,10 @@ class CollectFiles:
                 while os.path.exists(dest):
                     dest = os.path.join(dest_folder, f"{name}_{counter}{ext}")
                     counter += 1
-            shutil.copy2(src, dest)
-            copied.append(dest)
+            shutil.move(src, dest)
+            moved.append(dest)
 
-        result = "\n".join(copied) if copied else "Không tìm thấy file nào khớp pattern"
+        result = "\n".join(moved) if moved else "Không tìm thấy file nào khớp pattern"
         return (result,)
 
 
