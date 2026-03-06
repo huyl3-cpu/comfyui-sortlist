@@ -15,22 +15,16 @@ class SetValuesFromPanel:
                     "display_name": "FPS",
                 }),
 
-                "file_name": ("STRING", {
-                    "default": "all.mp4",
-                    "label": "Tên file cần lưu",
-                    "display_name": "Tên file cần lưu",
+                "convert_folder": ("STRING", {
+                    "default": "/content/drive/MyDrive/anime",
+                    "label": "THƯ MỤC chuyển style",
+                    "display_name": "THƯ MỤC chuyển style",
                 }),
 
                 "save_path": ("STRING", {
                     "default": "/content/drive/MyDrive/anime",
-                    "label": "Đường dẫn thư mục lưu",
-                    "display_name": "Đường dẫn thư mục lưu",
-                }),
-
-                "convert_folder": ("STRING", {
-                    "default": "/content/drive/MyDrive/anime",
-                    "label": "Đường dẫn thư mục chuyển đổi",
-                    "display_name": "Đường dẫn thư mục chuyển đổi",
+                    "label": "THƯ MỤC lưu",
+                    "display_name": "THƯ MỤC lưu",
                 }),
 
             }
@@ -41,15 +35,13 @@ class SetValuesFromPanel:
         "FLOAT",
         "STRING",
         "STRING",
-        "STRING",
     )
 
     RETURN_NAMES = (
         "stt",
         "fps",
-        "file_name",
-        "save_path",
         "convert_folder",
+        "save_path",
     )
 
     FUNCTION = "execute"
@@ -59,16 +51,14 @@ class SetValuesFromPanel:
         self,
         stt,
         fps,
-        file_name,
-        save_path,
         convert_folder,
+        save_path,
     ):
         return (
             stt,
             fps,
-            file_name,
-            save_path,
             convert_folder,
+            save_path,
         )
 
 
