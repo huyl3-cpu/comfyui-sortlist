@@ -1,7 +1,7 @@
 class SetValueForMC_I2V_V2:
     """
     Set configuration values for MC I2V V2 workflow.
-    Fields: URL image, URL audio, URL thư mục cần lưu, Prompt mô tả cử động.
+    Fields: URL image, URL audio, THƯ MỤC lưu, Prompt mô tả cử động.
     """
 
     @classmethod
@@ -16,7 +16,7 @@ class SetValueForMC_I2V_V2:
                     "default": "/content/drive/MyDrive/audio",
                     "multiline": False,
                 }),
-                "URL thư mục cần lưu": ("STRING", {
+                "THƯ MỤC lưu": ("STRING", {
                     "default": "/content/drive/MyDrive/output/videos",
                     "multiline": False,
                 }),
@@ -33,7 +33,7 @@ class SetValueForMC_I2V_V2:
     CATEGORY = "comfyui-sortlist"
 
     def set_values(self, **kwargs):
-        return (kwargs["URL image"], kwargs["URL audio"], kwargs["URL thư mục cần lưu"], kwargs["Prompt mô tả cử động (tiếng việt/tiếng anh)"])
+        return (kwargs["URL image"], kwargs["URL audio"], kwargs["THƯ MỤC lưu"], kwargs["Prompt mô tả cử động (tiếng việt/tiếng anh)"])
 
 
 NODE_CLASS_MAPPINGS = {
