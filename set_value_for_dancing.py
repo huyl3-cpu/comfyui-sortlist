@@ -3,56 +3,56 @@ class SetValueForDancingMask:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "Bật mask": ("BOOLEAN", {
+                "Enable Mask": ("BOOLEAN", {
                     "default": True,
                 }),
-                "Tách mask": ("STRING", {
-                    "default": "",
-                    "multiline": False,
-                    "placeholder": "Tách mask",
-                }),
-                "Bật background": ("BOOLEAN", {
+                "Enable Background": ("BOOLEAN", {
                     "default": True,
                 }),
-                "Thư mục lưu video kết quả": ("STRING", {
+                "Prompt Tách Mask": ("STRING", {
                     "default": "",
                     "multiline": False,
-                    "placeholder": "Thư mục lưu video kết quả",
+                    "placeholder": "Prompt Tách Mask",
                 }),
-                "Đường dẫn thư mục videos": ("STRING", {
+                "THƯ MỤC hình ảnh nhảy": ("STRING", {
                     "default": "",
                     "multiline": False,
-                    "placeholder": "Đường dẫn thư mục videos",
+                    "placeholder": "THƯ MỤC hình ảnh nhảy",
                 }),
-                "Đường dẫn thư mục hình ảnh": ("STRING", {
+                "THƯ MỤC videos nhảy": ("STRING", {
                     "default": "",
                     "multiline": False,
-                    "placeholder": "Đường dẫn thư mục hình ảnh",
+                    "placeholder": "THƯ MỤC videos nhảy",
+                }),
+                "THƯ MỤC lưu": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                    "placeholder": "THƯ MỤC lưu",
                 }),
             }
         }
 
-    RETURN_TYPES = ("BOOLEAN", "STRING", "BOOLEAN", "STRING", "STRING", "STRING")
+    RETURN_TYPES = ("BOOLEAN", "BOOLEAN", "STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = (
-        "Bật mask",
-        "Tách mask",
-        "Bật background",
-        "Thư mục lưu video kết quả",
-        "Đường dẫn thư mục videos",
-        "Đường dẫn thư mục hình ảnh",
+        "Enable Mask",
+        "Enable Background",
+        "Prompt Tách Mask",
+        "THƯ MỤC hình ảnh nhảy",
+        "THƯ MỤC videos nhảy",
+        "THƯ MỤC lưu",
     )
     FUNCTION = "run"
     CATEGORY = "comfyui-sortlist"
 
     def run(self, **kwargs):
-        bat_mask = kwargs.get("Bật mask", True)
-        mask_prompt = kwargs.get("Tách mask", "") or ""
-        bat_background = kwargs.get("Bật background", True)
-        save_path = kwargs.get("Thư mục lưu video kết quả", "") or ""
-        videos_dir = kwargs.get("Đường dẫn thư mục videos", "") or ""
-        images_dir = kwargs.get("Đường dẫn thư mục hình ảnh", "") or ""
+        enable_mask = kwargs.get("Enable Mask", True)
+        enable_bg = kwargs.get("Enable Background", True)
+        mask_prompt = kwargs.get("Prompt Tách Mask", "") or ""
+        images_dir = kwargs.get("THƯ MỤC hình ảnh nhảy", "") or ""
+        videos_dir = kwargs.get("THƯ MỤC videos nhảy", "") or ""
+        save_path = kwargs.get("THƯ MỤC lưu", "") or ""
 
-        return (bat_mask, mask_prompt, bat_background, save_path, videos_dir, images_dir)
+        return (enable_mask, enable_bg, mask_prompt, images_dir, videos_dir, save_path)
 
 
 class SetValueForDancingNoneMask:
