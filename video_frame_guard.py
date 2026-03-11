@@ -118,12 +118,9 @@ class VHS_VideoFrameGuard:
 
             fps_used = float(force_rate_fps) if force_rate_fps and float(force_rate_fps) > 0 else (fps_meta or 30.0)
 
-            # Get actual frame count from video
-            # Priority: nb_frames (most accurate) > calculate from duration * fps
-            if nb_frames is not None and nb_frames > 0:
-                est_frames = int(nb_frames)
-            elif dur is not None and dur > 0:
-                est_frames = int(math.ceil(dur * fps_used))
+            # Always calculate frames from force_rate_fps * duration_sec
+            if dur is not None and dur > 0:
+                est_frames = int(math.ceil(fps_used * dur))
             else:
                 est_frames = max_frames + 1  # fail-safe: treat as too long
 
