@@ -106,6 +106,7 @@ _safe_merge("set_value_mc_i2v")
 _safe_merge("set_value_mc_i2v_v2")
 _safe_merge("adaptive_resolution")
 _safe_merge("resolution_down_step")
+_safe_merge("max_frames_from_resolution")
 
 _safe_merge("clear_folder")
 _safe_merge("clear_folder_pattern")
