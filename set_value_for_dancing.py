@@ -9,6 +9,9 @@ class SetValueForDancingMask:
                 "Enable Background": ("BOOLEAN", {
                     "default": True,
                 }),
+                "Enable Upscale": ("BOOLEAN", {
+                    "default": False,
+                }),
                 "Prompt Tách Mask": ("STRING", {
                     "default": "",
                     "multiline": False,
@@ -32,10 +35,11 @@ class SetValueForDancingMask:
             }
         }
 
-    RETURN_TYPES = ("BOOLEAN", "BOOLEAN", "STRING", "STRING", "STRING", "STRING")
+    RETURN_TYPES = ("BOOLEAN", "BOOLEAN", "BOOLEAN", "STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = (
         "Enable Mask",
         "Enable Background",
+        "Enable Upscale",
         "Prompt Tách Mask",
         "THƯ MỤC hình ảnh nhảy",
         "THƯ MỤC videos nhảy",
@@ -47,12 +51,13 @@ class SetValueForDancingMask:
     def run(self, **kwargs):
         enable_mask = kwargs.get("Enable Mask", True)
         enable_bg = kwargs.get("Enable Background", True)
+        enable_upscale = kwargs.get("Enable Upscale", False)
         mask_prompt = kwargs.get("Prompt Tách Mask", "") or ""
         images_dir = kwargs.get("THƯ MỤC hình ảnh nhảy", "") or ""
         videos_dir = kwargs.get("THƯ MỤC videos nhảy", "") or ""
         save_path = kwargs.get("THƯ MỤC lưu", "") or ""
 
-        return (enable_mask, enable_bg, mask_prompt, images_dir, videos_dir, save_path)
+        return (enable_mask, enable_bg, enable_upscale, mask_prompt, images_dir, videos_dir, save_path)
 
 
 class SetValueForDancingNoneMask:
