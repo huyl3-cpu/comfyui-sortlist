@@ -1,7 +1,7 @@
 class SetValueForMC_I2V_V2:
     """
     Set configuration values for MC I2V V2 workflow.
-    Fields: URL image, URL audio, THƯ MỤC lưu, Prompt mô tả cử động.
+    Fields: URL image, URL audio, Độ phân giải, THƯ MỤC lưu, Prompt mô tả cử động.
     """
 
     @classmethod
@@ -16,6 +16,9 @@ class SetValueForMC_I2V_V2:
                     "default": "/content/drive/MyDrive/audio",
                     "multiline": False,
                 }),
+                "Độ phân giải": (["480p", "720p", "1080p"], {
+                    "default": "720p",
+                }),
                 "THƯ MỤC lưu": ("STRING", {
                     "default": "/content/drive/MyDrive/output/videos",
                     "multiline": False,
@@ -27,13 +30,21 @@ class SetValueForMC_I2V_V2:
             }
         }
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("path_image", "path_audio", "save_dir", "prompt")
+    RETURN_TYPES = ("STRING", "STRING", "INT", "STRING", "STRING")
+    RETURN_NAMES = ("path_image", "path_audio", "resolution", "save_dir", "prompt")
     FUNCTION = "set_values"
     CATEGORY = "comfyui-sortlist"
 
     def set_values(self, **kwargs):
-        return (kwargs["URL image"], kwargs["URL audio"], kwargs["THƯ MỤC lưu"], kwargs["Prompt mô tả cử động (tiếng việt/tiếng anh)"])
+        resolution_map = {"480p": 480, "720p": 720, "1080p": 1080}
+        resolution_int = resolution_map[kwargs["Độ phân giải"]]
+        return (
+            kwargs["URL image"],
+            kwargs["URL audio"],
+            resolution_int,
+            kwargs["THƯ MỤC lưu"],
+            kwargs["Prompt mô tả cử động (tiếng việt/tiếng anh)"],
+        )
 
 
 NODE_CLASS_MAPPINGS = {
