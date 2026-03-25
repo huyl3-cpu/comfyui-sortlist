@@ -35,10 +35,14 @@ class ClearVRAMPassThrough:
         # 2. Soft empty CUDA cache — frees VRAM without affecting active tensors
         mm.soft_empty_cache()
 
-        # 3. Python GC to collect any remaining Python-side references
+        # 3. Hard empty PyTorch CUDA allocator cache (more aggressive than soft)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        # 4. Python GC to collect any remaining Python-side references
         gc.collect()
 
-        # 4. Pass input unchanged
+        # 5. Pass input unchanged
         return (any_input,)
 
 
