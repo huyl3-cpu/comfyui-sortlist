@@ -8,9 +8,8 @@ class AdaptiveResolution:
     Automatically scales resolution based on input dimensions.
     
     Logic:
-    - If min(width, height) <= 480 → Output: 720
-    - If 480 < min(width, height) <= 720 → Output: 1080
-    - If min(width, height) > 720 → Output: 1080
+    - If min(width, height) <= 720 → Output: 720, batch_size: 8
+    - If min(width, height) > 720  → Output: 1080, batch_size: 3
     """
     
     @classmethod
@@ -42,8 +41,7 @@ class AdaptiveResolution:
     Automatically determines output resolution and batch size based on input dimensions.
     
     Rules:
-    - min(w,h) ≤ 480 → 720p output, batch_size=8
-    - 480 < min(w,h) ≤ 720 → 1080p output, batch_size=3
+    - min(w,h) ≤ 720 → 720p output, batch_size=8
     - min(w,h) > 720 → 1080p output, batch_size=3
     """
     
@@ -62,12 +60,9 @@ class AdaptiveResolution:
         """
         min_dimension = min(width, height)
         
-        if min_dimension <= 480:
+        if min_dimension <= 720:
             output_resolution = 720
             batch_size = 8
-        elif min_dimension <= 720:
-            output_resolution = 1080
-            batch_size = 3
         else:
             output_resolution = 1080
             batch_size = 3
