@@ -1,7 +1,7 @@
 class SetValueForMC_V2V_V2:
     """
     Set configuration values for MC V2V V2 workflow.
-    Includes: video path, audio path, Vietnamese motion prompt.
+    Includes: video path, audio path, output folder, Vietnamese motion prompt.
     """
 
     @classmethod
@@ -18,6 +18,11 @@ class SetValueForMC_V2V_V2:
                     "multiline": False,
                     "placeholder": "Đường dẫn file audio (.mp3/.wav)",
                 }),
+                "Đường dẫn thư mục lưu": ("STRING", {
+                    "default": "",
+                    "multiline": False,
+                    "placeholder": "Thư mục lưu file output",
+                }),
                 "Prompt cử động tiếng việt": ("STRING", {
                     "default": "",
                     "multiline": True,
@@ -26,8 +31,8 @@ class SetValueForMC_V2V_V2:
             }
         }
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING")
-    RETURN_NAMES = ("video_path", "audio_path", "motion_prompt_vi")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("video_path", "audio_path", "output_folder", "motion_prompt_vi")
     FUNCTION = "set_values"
     CATEGORY = "comfyui-sortlist"
 
@@ -35,6 +40,7 @@ class SetValueForMC_V2V_V2:
         return (
             kwargs["Đường dẫn video"],
             kwargs["Đường dẫn audio"],
+            kwargs["Đường dẫn thư mục lưu"],
             kwargs["Prompt cử động tiếng việt"],
         )
 
