@@ -55,17 +55,16 @@ class SplitMP3V2Node:
 
     RETURN_TYPES = ("STRING", "INT")
     RETURN_NAMES = ("file_paths", "count")
-    OUTPUT_IS_LIST = (True, False)
     FUNCTION = "split"
     CATEGORY = "utils"
     DESCRIPTION = """
     Cắt file MP3 thành từng đoạn tối đa N phút (mặc định 3 phút).
 
-    - Nếu duration <= max_minutes: không cắt, trả về [file gốc]
+    - Nếu duration <= max_minutes: không cắt, trả về file gốc
     - Nếu duration >  max_minutes: cắt thành nhiều đoạn, đoạn cuối = phần dư
 
     Output:
-    - file_paths : list đường dẫn các file (STRING list)
+    - file_paths : STRING hiển thị tất cả path (mỗi file 1 dòng)
     - count      : tổng số file output (INT)
     """
 
@@ -121,7 +120,7 @@ class SplitMP3V2Node:
         # Nếu file ngắn hơn hoặc bằng giới hạn → không cắt
         if duration <= max_sec:
             print(f"[SplitMP3V2] ✅ Không cắt (duration <= {max_minutes} phút), trả về file gốc.")
-            return ([mp3_path], 1)
+            return (mp3_path, 1)
 
         # Tính các segment
         num_full = int(duration // max_sec)
@@ -150,7 +149,8 @@ class SplitMP3V2Node:
                 print(f"[SplitMP3V2]   [{idx:03d}] ❌ Cắt thất bại")
 
         print(f"[SplitMP3V2] ✅ Xong: {len(output_files)}/{len(segments)} file")
-        return (output_files, len(output_files))
+        result_str = "\n".join(output_files)
+        return (result_str, len(output_files))
 
 
 # Node registration
