@@ -1,7 +1,7 @@
 class SetValueForMC_V2V_V2:
     """
     Set configuration values for MC V2V V2 workflow.
-    Includes: video path, audio path, output folder, Vietnamese motion prompt.
+    Includes: video path, audio path, resolution, output folder, Vietnamese motion prompt.
     """
 
     @classmethod
@@ -18,6 +18,10 @@ class SetValueForMC_V2V_V2:
                     "multiline": False,
                     "placeholder": "Đường dẫn file audio (.mp3/.wav)",
                 }),
+                "Độ phân giải": (["480p", "720p"], {
+                    "default": "480p",
+                    "tooltip": "480p = 480, 720p = 720",
+                }),
                 "Đường dẫn thư mục lưu": ("STRING", {
                     "default": "",
                     "multiline": False,
@@ -31,15 +35,18 @@ class SetValueForMC_V2V_V2:
             }
         }
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("video_path", "audio_path", "output_folder", "motion_prompt_vi")
+    RETURN_TYPES = ("STRING", "STRING", "INT", "STRING", "STRING")
+    RETURN_NAMES = ("video_path", "audio_path", "resolution", "output_folder", "motion_prompt_vi")
     FUNCTION = "set_values"
     CATEGORY = "comfyui-sortlist"
 
     def set_values(self, **kwargs):
+        resolution_map = {"480p": 480, "720p": 720}
+        resolution_int = resolution_map[kwargs["Độ phân giải"]]
         return (
             kwargs["Đường dẫn video"],
             kwargs["Đường dẫn audio"],
+            resolution_int,
             kwargs["Đường dẫn thư mục lưu"],
             kwargs["Prompt cử động tiếng việt"],
         )
