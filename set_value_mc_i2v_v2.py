@@ -16,7 +16,7 @@ class SetValueForMC_I2V_V2:
                     "default": "/content/drive/MyDrive/audio",
                     "multiline": False,
                 }),
-                "Độ phân giải": (["480p", "720p", "1080p"], {
+                "Độ phân giải": (["480p", "600p", "720p", "1080p"], {
                     "default": "720p",
                 }),
                 "THƯ MỤC lưu": ("STRING", {
@@ -36,7 +36,7 @@ class SetValueForMC_I2V_V2:
     CATEGORY = "comfyui-sortlist"
 
     def set_values(self, **kwargs):
-        resolution_map = {"480p": 480, "720p": 720, "1080p": 1080}
+        resolution_map = {"480p": 480, "600p": 600, "720p": 720, "1080p": 1080}
         resolution_int = resolution_map[kwargs["Độ phân giải"]]
         return (
             kwargs["URL image"],
