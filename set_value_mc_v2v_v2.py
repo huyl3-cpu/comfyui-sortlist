@@ -18,9 +18,9 @@ class SetValueForMC_V2V_V2:
                     "multiline": False,
                     "placeholder": "Đường dẫn file audio (.mp3/.wav)",
                 }),
-                "Độ phân giải": (["480p", "720p"], {
+                "Độ phân giải": (["480p", "600p", "720p"], {
                     "default": "480p",
-                    "tooltip": "480p = 480, 720p = 720",
+                    "tooltip": "480p = 480, 600p = 600, 720p = 720",
                 }),
                 "Đường dẫn thư mục lưu": ("STRING", {
                     "default": "",
@@ -41,7 +41,7 @@ class SetValueForMC_V2V_V2:
     CATEGORY = "comfyui-sortlist"
 
     def set_values(self, **kwargs):
-        resolution_map = {"480p": 480, "720p": 720}
+        resolution_map = {"480p": 480, "600p": 600, "720p": 720}
         resolution_int = resolution_map[kwargs["Độ phân giải"]]
         return (
             kwargs["Đường dẫn video"],
