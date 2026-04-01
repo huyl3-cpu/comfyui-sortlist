@@ -1,28 +1,24 @@
 """
 WanVideo Frame Window Size Calculator
-Tính frame_window_size phù hợp từ tổng số frame input.
+Tính frame_window_size (x) từ tổng số frame và số lần sampling (n).
 
-WanVideo VAE temporal compression factor = 4
-Công thức: output_frames = (frame_window_size - 1) × 4 + 1
-Ngược lại:  ideal_latent  = (total_frames  - 1) / 4 + 1
+Công thức WanVideo:  output_frames = x * n + 1
+Suy ra:              x = round((total_frames - 1) / n)
+Ràng buộc:           x < 121  (frame_window_size tối đa WanVideo)
 
-frame_window_size hợp lệ phải là 4n+1 và nằm trong [81, 101]:
-  81, 85, 89, 93, 97, 101
+Tự động n=1 khi total_frames nhỏ (total_frames-1 <= 120):
+    → video ngắn, 1 window là đủ, không cần sampling nhiều lần
 """
-
-# Valid frame_window_size values: 4n+1, n=20..25
-VALID_WINDOW_SIZES = [81, 85, 89, 93, 97, 101]
+import math
 
 
 class WanFrameWindowSize:
     """
-    Tính frame_window_size tối ưu cho WanVideo từ tổng số frame input.
+    Tính frame_window_size (x) cho WanVideo với 2 ràng buộc:
 
-    WanVideo VAE nén temporal theo hệ số 4:
-        output_frames = (frame_window_size - 1) × 4 + 1
-
-    Node này tìm giá trị frame_window_size (4n+1) gần nhất trong [81-101]
-    sao cho output_frames gần nhất với total_frames.
+    1. x < 121 luôn đảm bảo (tự tăng n nếu cần)
+    2. Nếu total_frames nhỏ (total_frames-1 <= 120) → force n=1
+       tránh sampling quá nhiều lần cho video ngắn
     """
 
     @classmethod
@@ -34,49 +30,76 @@ class WanFrameWindowSize:
                     "min": 1,
                     "max": 99999,
                     "step": 1,
-                    "tooltip": "Tổng số frame của video input (loaded_frame_count)"
+                    "tooltip": "Tổng số frame của video input",
+                }),
+                "n": ("INT", {
+                    "default": 4,
+                    "min": 1,
+                    "max": 1000,
+                    "step": 1,
+                    "tooltip": "Số lần sampling mong muốn (tự động giảm về 1 nếu video ngắn)",
                 }),
             },
         }
 
-    RETURN_TYPES = ("INT", "INT", "INT")
-    RETURN_NAMES = ("frame_window_size", "output_frames", "frame_diff")
+    RETURN_TYPES = ("INT", "INT", "INT", "INT")
+    RETURN_NAMES = ("frame_window_size", "output_frames", "frame_diff", "n_used")
     FUNCTION = "calculate"
     CATEGORY = "utils"
     DESCRIPTION = """
-    Tính frame_window_size tối ưu cho WanVideo Animate Embeds.
+Tính frame_window_size (x) sao cho x * n + 1 ≈ total_frames, với x < 121.
 
-    - Input:  total_frames = tổng frame video gốc
-    - Output: frame_window_size = giá trị 4n+1 gần nhất trong [81, 101]
-              output_frames = số frame sẽ được generate
-              frame_diff    = chênh lệch so với input (output - input)
+Quy tắc:
+  • total_frames - 1 <= 120  → n=1 tự động (video ngắn, 1 window đủ)
+  • x >= 121                 → tự tăng n cho đến khi x < 121
 
-    Các giá trị hợp lệ: 81, 85, 89, 93, 97, 101
-    """
+Ví dụ (n=4):
+  total=81   → x=20,  n=1  (nhỏ → n=1)   output=21  diff=-60
+  total=81   → x=20,  n=4  → n=1 vì 80<=120
+  total=161  → x=40,  n=4  → output=161  diff=0
+  total=485  → x=121? → tăng n=5 → x=96  output=481  diff=-4
+  total=700  → x=175? → tăng n=6 → x=117 output=703  diff=+3
+"""
 
-    def calculate(self, total_frames: int):
-        # Tính ideal latent frames từ total_frames
-        # Công thức ngược: ideal = (total_frames - 1) / 4 + 1
-        ideal_latent = (total_frames - 1) / 4.0 + 1.0
+    X_MAX = 100  # frame_window_size tối đa (x < 101)
 
-        # Tìm giá trị trong VALID_WINDOW_SIZES gần ideal_latent nhất
-        best_window = min(VALID_WINDOW_SIZES, key=lambda w: abs(w - ideal_latent))
+    def calculate(self, total_frames: int, n: int):
+        raw = total_frames - 1  # số khoảng cần chia
 
-        # Tính lại output_frames từ frame_window_size đã chọn
-        output_frames = (best_window - 1) * 4 + 1
+        # ── Rule 1: video ngắn → n=1 (total_frames ~ x) ─────────────────────
+        if raw <= self.X_MAX:
+            effective_n = 1
+            x = raw  # x * 1 + 1 = total_frames chính xác
+        else:
+            # ── Rule 2: tính x với n đã cho ──────────────────────────────────
+            effective_n = n
+            x = round(raw / effective_n)
 
-        # Chênh lệch: dương = generate nhiều hơn, âm = ít hơn
+            # ── Rule 3: x >= 121 → tăng n cho đến khi x < 121 ───────────────
+            if x > self.X_MAX:
+                effective_n = math.ceil(raw / self.X_MAX)
+                x = round(raw / effective_n)
+
+        # Safety cap (phòng trường hợp làm tròn ra đúng 121)
+        x = min(x, self.X_MAX)
+
+        output_frames = x * effective_n + 1
         frame_diff = output_frames - total_frames
 
+        reason = ""
+        if effective_n != n:
+            if n > effective_n and effective_n == 1:
+                reason = " [auto n=1: video ngắn]"
+            else:
+                reason = f" [auto n={effective_n}: x quá lớn]"
+
         print(
-            f"[WanFrameWindow] total_frames={total_frames} "
-            f"→ ideal_latent={ideal_latent:.2f} "
-            f"→ frame_window_size={best_window} "
-            f"→ output_frames={output_frames} "
-            f"(diff={frame_diff:+d})"
+            f"[WanFrameWindow] total={total_frames}, n_req={n}{reason}"
+            f" → x={x}, n_used={effective_n}"
+            f" → output={output_frames} (diff={frame_diff:+d})"
         )
 
-        return (best_window, output_frames, frame_diff)
+        return (x, output_frames, frame_diff, effective_n)
 
 
 # Node registration
@@ -87,3 +110,4 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "WanFrameWindowSize": "Wan Frame Window Size 🎞️",
 }
+
