@@ -64,13 +64,6 @@ class WanFrameWindowSize:
                     "step": 1,
                     "tooltip": "Tổng số frame của video input",
                 }),
-                "n": ("INT", {
-                    "default": 4,
-                    "min": 1,
-                    "max": 1000,
-                    "step": 1,
-                    "tooltip": "Số lần sampling mong muốn (hint, tự động tăng nếu cần)",
-                }),
             },
         }
 
@@ -79,20 +72,19 @@ class WanFrameWindowSize:
     FUNCTION      = "calculate"
     CATEGORY      = "utils"
     DESCRIPTION   = (
-        "Tính frame_window_size (x = 4k+1, x < 101) cho WanVideo.\n"
-        "x*n+1 >= total_frames, x nhỏ nhất thỏa mãn.\n"
+        "Tự động tính frame_window_size (x = 4k+1, x ≤ 97) và n nhỏ nhất\n"
+        "sao cho x*n+1 > total_frames.\n"
         "Output frame_diff = output_frames - total_frames (số frame thừa cần trim)."
     )
 
-    def calculate(self, total_frames: int, n: int):
+    def calculate(self, total_frames: int):
         # ── Trường hợp đặc biệt: 1 frame ──────────────────────────────────
         if total_frames <= 1:
             print("[WanFrameWindow] total=1 → x=1, n=1")
             return (1, 2, 1, 1)
 
-        # ── Trường hợp video ngắn: total_frames <= 98 → 1 window đủ ───────
-        # Khi total_frames-1 <= 97 thì next_4k1(total_frames-1) <= 97 (X_MAX)
-        # Dùng n=1: cần x*1+1 >= total_frames → x >= total_frames-1
+        # ── Video ngắn: total_frames <= 98 → 1 window đủ ──────────────────
+        # next_4k1(total_frames-1) luôn <= 97 khi total_frames-1 <= 97
         if total_frames <= 98:
             effective_n = 1
             x = _next_4k1(total_frames - 1)   # guaranteed <= 97
@@ -104,27 +96,22 @@ class WanFrameWindowSize:
             )
             return (x, output_frames, frame_diff, effective_n)
 
-        # ── Trường hợp chính: tính x theo n ──────────────────────────────
-        # Cần x*n + 1 > total_frames (strictly) để luôn có frame thừa để trim
-        # → x > (total_frames-1)/n  →  min_x = (total_frames-1)//n + 1
-        effective_n = max(1, n)
-        auto_increased = False
-
+        # ── Tự động tìm n nhỏ nhất sao cho x <= 97 ───────────────────────
+        # min_x = (total_frames-1)//n + 1  → x = next_4k1(min_x) <= 97
+        effective_n = 1
         while True:
             min_x = (total_frames - 1) // effective_n + 1
             x = _next_4k1(min_x)
             if x <= self.X_MAX:
                 break
             effective_n += 1
-            auto_increased = True
 
         output_frames = x * effective_n + 1
-        frame_diff = output_frames - total_frames   # frame thừa ở cuối, WanTrimFrames sẽ cắt
+        frame_diff = output_frames - total_frames
 
-        reason = f" [auto n tăng → {effective_n}]" if auto_increased else ""
         print(
-            f"[WanFrameWindow] total={total_frames}, n_req={n}{reason}"
-            f" → x={x} (4*{(x-1)//4}+1), n_used={effective_n}"
+            f"[WanFrameWindow] total={total_frames}"
+            f" → auto n={effective_n}, x={x} (4*{(x-1)//4}+1)"
             f" → output={output_frames} (diff={frame_diff:+d}, trim {frame_diff} frame cuối)"
         )
         return (x, output_frames, frame_diff, effective_n)
@@ -217,19 +204,12 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 if __name__ == "__main__":
     node = WanFrameWindowSize()
     tests = [
-        (357, 4),   # example: expect x=93
-        (81,  4),   # short → n=1
-        (101, 4),   # boundary → n=1
-        (102, 4),   # just over boundary
-        (373, 4),   # exact 93*4+1
-        (388, 4),   # 97*4=388 → x=97
-        (389, 4),   # push to n=5
-        (700, 4),
-        (1000, 4),
+        1, 2, 5, 10, 81, 97, 98, 99, 101, 102,
+        357, 373, 388, 389, 700, 1000, 5000,
     ]
-    print(f"{'total':>6} {'n_in':>5} | {'x':>4} {'n_used':>6} {'output':>7} {'diff':>6}  check")
-    print("-" * 60)
-    for tf, n in tests:
-        x, out, diff, nu = node.calculate(tf, n)
-        ok = "✓" if x == (4 * ((x-1)//4) + 1) and x <= 97 and out >= tf else "✗"
-        print(f"{tf:>6} {n:>5} | {x:>4} {nu:>6} {out:>7} {diff:>+6}  {ok} x=4*{(x-1)//4}+1")
+    print(f"{'total':>6} | {'x':>4} {'n_auto':>6} {'output':>7} {'diff':>6}  check")
+    print("-" * 55)
+    for tf in tests:
+        x, out, diff, nu = node.calculate(tf)
+        ok = "✓" if x == (4 * ((x-1)//4) + 1) and x <= 97 and out > tf else "✗"
+        print(f"{tf:>6} | {x:>4} {nu:>6} {out:>7} {diff:>+6}  {ok} x=4*{(x-1)//4}+1")
