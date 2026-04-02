@@ -136,6 +136,9 @@ class VHS_VideoFrameGuard:
             else:
                 invalid.append(p)
                 all_ok = False
+                # raise_on_fail=False → vẫn đưa vào valid để workflow tiếp tục xử lý
+                if not raise_on_fail:
+                    valid.append(p)
 
         valid_s = "\n".join(valid)
         invalid_s = "\n".join(invalid)

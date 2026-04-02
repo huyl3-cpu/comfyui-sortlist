@@ -1,4 +1,4 @@
-﻿"""
+"""
 Split MP3 V2 Node for ComfyUI
 Cß║»t file MP3 th├ánh c├íc ─æoß║ín tß╗æi ─æa 3 ph├║t.
 - Nß║┐u file < 3 ph├║t: kh├┤ng cß║»t, trß║ú vß╗ü file gß╗æc
