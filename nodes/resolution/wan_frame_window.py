@@ -96,22 +96,19 @@ class WanFrameWindowSize:
             )
             return (x, output_frames, frame_diff, effective_n)
 
-        # ── Tự động tìm n nhỏ nhất sao cho x <= 97 ───────────────────────
-        # min_x = (total_frames-1)//n + 1  → x = next_4k1(min_x) <= 97
-        effective_n = 1
-        while True:
-            min_x = (total_frames - 1) // effective_n + 1
-            x = _next_4k1(min_x)
-            if x <= self.X_MAX:
-                break
-            effective_n += 1
+        # ── Công thức đóng: n = ⌈(y−1) / X_MAX⌉ ─────────────────
+        # - Đây là n nhỏ nhất đảm bảo (y-1)/n ≤ X_MAX → min_x ≤ X_MAX
+        # - next_4k1(min_x) luôn ≤ X_MAX vì X_MAX = 4k+1 (121=4*30+1)
+        effective_n = math.ceil((total_frames - 1) / self.X_MAX)
+        min_x = math.ceil((total_frames - 1) / effective_n)
+        x = _next_4k1(min_x)
 
         output_frames = x * effective_n + 1
         frame_diff = output_frames - total_frames
 
         print(
             f"[WanFrameWindow] total={total_frames}"
-            f" → auto n={effective_n}, x={x} (4*{(x-1)//4}+1)"
+            f" → n={effective_n}, x={x} (4*{(x-1)//4}+1)"
             f" → output={output_frames} (diff={frame_diff:+d}, trim {frame_diff} frame cuối)"
         )
         return (x, output_frames, frame_diff, effective_n)
