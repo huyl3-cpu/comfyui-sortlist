@@ -3,15 +3,15 @@ WanVideo Frame Window Size Calculator
 Tính frame_window_size (x) từ tổng số frame và số lần sampling (n).
 
 Công thức WanVideo:  output_frames = x * n + 1
-Wan VAE yêu cầu:     x = 4k+1  (k = 0,1,2,...) tức là x ∈ {1,5,9,...,113,117,121,...}
-Ràng buộc:           x < 121  (x_max = 117)
+Wan VAE yêu cầu:     x = 4k+1  (k = 0,1,2,...) tức là x ∈ {1,5,9,...,117,121,125,...}
+Ràng buộc:           x <= 121  (x_max = 121)
 
 Thuật toán tìm x:
   1. min_x = ceil(total_frames / n)  (để x*n + 1 > total_frames → không thiếu frame)
   2. x = nearest 4k+1 >= min_x
-  3. Nếu x >= 121 → tăng n và thử lại
+  3. Nếu x > 121 → tăng n và thử lại
 
-Tự động n=1 khi total_frames <= 118 (video ngắn, 1 window là đủ).
+Tự động n=1 khi total_frames <= 122 (video ngắn, 1 window là đủ).
 
 Ví dụ (n=4):
   total=357  → min_x=ceil(357/4)=90 → x=93 (4*23+1)
@@ -42,16 +42,16 @@ class WanFrameWindowSize:
     """
     Tính frame_window_size (x) cho WanVideo:
       • x phải có dạng 4k+1  (yêu cầu của Wan VAE)
-      • x < 121  (x_max = 117)
+      • x <= 121  (x_max = 121)
       • x*n + 1 >= total_frames  (đủ frame để sample)
       • x nhỏ nhất thỏa mãn (tối thiểu waste)
 
     Đặc biệt:
-      • total_frames <= 118 → n=1 tự động (video ngắn, 1 window đủ)
-      • Nếu x vẫn >= 121 → tự tăng n cho đến khi x <= 117
+      • total_frames <= 122 → n=1 tự động (video ngắn, 1 window đủ)
+      • Nếu x vẫn > 121 → tự tăng n cho đến khi x <= 121
     """
 
-    X_MAX = 117  # max valid 4k+1 < 121 (4*29+1=117, 4*30+1=121 → loại)
+    X_MAX = 121  # max valid 4k+1 <= 121 (4*30+1=121)
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -72,7 +72,7 @@ class WanFrameWindowSize:
     FUNCTION      = "calculate"
     CATEGORY      = "utils"
     DESCRIPTION   = (
-        "Tự động tính frame_window_size (x = 4k+1, x ≤ 117) và n nhỏ nhất\n"
+        "Tự động tính frame_window_size (x = 4k+1, x ≤ 121) và n nhỏ nhất\n"
         "sao cho x*n+1 > total_frames.\n"
         "Output frame_diff = output_frames - total_frames (số frame thừa cần trim)."
     )
@@ -83,11 +83,11 @@ class WanFrameWindowSize:
             print("[WanFrameWindow] total=1 → x=1, n=1")
             return (1, 2, 1, 1)
 
-        # ── Video ngắn: total_frames <= 118 → 1 window đủ ─────────────────
-        # next_4k1(total_frames-1) luôn <= 117 khi total_frames-1 <= 117
-        if total_frames <= 118:
+        # ── Video ngắn: total_frames <= 122 → 1 window đủ ─────────────────
+        # next_4k1(total_frames-1) luôn <= 121 khi total_frames-1 <= 121
+        if total_frames <= 122:
             effective_n = 1
-            x = _next_4k1(total_frames - 1)   # guaranteed <= 117
+            x = _next_4k1(total_frames - 1)   # guaranteed <= 121
             output_frames = x * effective_n + 1
             frame_diff = output_frames - total_frames
             print(
@@ -211,5 +211,5 @@ if __name__ == "__main__":
     print("-" * 55)
     for tf in tests:
         x, out, diff, nu = node.calculate(tf)
-        ok = "✓" if x == (4 * ((x-1)//4) + 1) and x <= 117 and out > tf else "✗"
+        ok = "✓" if x == (4 * ((x-1)//4) + 1) and x <= 121 and out > tf else "✗"
         print(f"{tf:>6} | {x:>4} {nu:>6} {out:>7} {diff:>+6}  {ok} x=4*{(x-1)//4}+1")
