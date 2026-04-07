@@ -1,6 +1,6 @@
 import random
 import torch
-from .videos_nodes import check_license_shared
+from ..video.videos_nodes import check_license_shared
 
 
 def _rand_hw():
