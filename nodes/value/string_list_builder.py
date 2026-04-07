@@ -20,8 +20,8 @@ class StringListBuilder:
         return {
             "required": {},
             "optional": {
-                "string_1": ("STRING", {"default": "", "multiline": False, "dynamicPrompts": False}),
-                "string_2": ("STRING", {"default": "", "multiline": False, "dynamicPrompts": False}),
+                "string_1": ("STRING", {"forceInput": True}),
+                "string_2": ("STRING", {"forceInput": True}),
             },
         }
 
