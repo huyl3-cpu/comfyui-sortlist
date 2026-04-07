@@ -8,8 +8,8 @@ class AdaptiveResolution:
     Automatically scales resolution based on input dimensions.
     
     Logic:
-    - If min(width, height) <= 720 → Output: 720, batch_size: 8
-    - If min(width, height) > 720  → Output: 1080, batch_size: 3
+    - If min(width, height) <= 720 → Output: 720, batch_size: 7
+    - If min(width, height) > 720  → Output: 1080, batch_size: 2
     """
     
     @classmethod
@@ -41,8 +41,8 @@ class AdaptiveResolution:
     Automatically determines output resolution and batch size based on input dimensions.
     
     Rules:
-    - min(w,h) ≤ 720 → 720p output, batch_size=8
-    - min(w,h) > 720 → 1080p output, batch_size=3
+    - min(w,h) ≤ 720 → 720p output, batch_size=7
+    - min(w,h) > 720 → 1080p output, batch_size=2
     """
     
     def calculate_resolution(self, width, height):
@@ -62,10 +62,10 @@ class AdaptiveResolution:
         
         if min_dimension <= 720:
             output_resolution = 720
-            batch_size = 8
+            batch_size = 7
         else:
             output_resolution = 1080
-            batch_size = 3
+            batch_size = 2
         
         return (output_resolution, batch_size)
 
