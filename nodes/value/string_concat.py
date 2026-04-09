@@ -1,25 +1,24 @@
 """
-StringConcat - Gộp nhiều STRING input thành 1 list.
-Dựa vào giá trị từ `input_count` để xác định số đầu vào. Mọi string sẽ được gộp và tách lại bằng dấu xuống dòng.
+StringConcatMulti - Gộp cố định 10 STRING input thành 1 list.
+Hoàn toàn tĩnh bằng Python, không sử dụng Javascript để tránh lỗi giao diện.
 """
 
-
-class StringConcat:
+class StringConcatMulti:
     """
-    Nhận nhiều STRING input xác định bởi `input_count`.
+    Nhận cố định 10 STRING input.
     Gộp tất cả lại thành 1 string duy nhất (có thể nhiều dòng).
     Sau đó phân tách các dòng tạo thành một STRING list.
     """
 
     @classmethod
     def INPUT_TYPES(cls):
+        optional_inputs = {}
+        for i in range(1, 11):
+            optional_inputs[f"string_{i}"] = ("STRING", {"forceInput": True})
+
         return {
-            "required": {
-                "input_count": ("INT", {"default": 2, "min": 1, "max": 100, "step": 1}),
-            },
-            "optional": {
-                # Các slot string_1, string_2... sẽ được thêm động bằng JS khi đổi input_count
-            },
+            "required": {},
+            "optional": optional_inputs,
         }
 
     RETURN_TYPES = ("STRING",)
@@ -28,14 +27,15 @@ class StringConcat:
     FUNCTION = "build"
     CATEGORY = "sortlist/value"
     DESCRIPTION = (
-        "Gộp nhiều STRING input lại, sau đó tách mỗi dòng thành 1 phần tử danh sách (LIST). "
+        "Gộp tối đa 10 STRING input lại, sau đó tách mỗi dòng thành 1 phần tử danh sách (LIST). "
+        "Hoàn toàn dùng Python, không lỗi giao diện."
     )
 
-    def build(self, input_count, **kwargs):
+    def build(self, **kwargs):
         texts = []
         
-        # Đọc dữ liệu từ tất cả slot đang cắm
-        for i in range(1, input_count + 1):
+        # Đọc dữ liệu từ 10 slot tĩnh
+        for i in range(1, 11):
             key = f"string_{i}"
             val = kwargs.get(key)
             if val is not None and str(val).strip():
@@ -55,9 +55,9 @@ class StringConcat:
 
 
 NODE_CLASS_MAPPINGS = {
-    "StringConcat": StringConcat,
+    "StringConcatMulti": StringConcatMulti,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "StringConcat": "String Concat 🔤",
+    "StringConcatMulti": "String Concat Multi 🔤",
 }
