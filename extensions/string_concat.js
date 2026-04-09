@@ -1,12 +1,12 @@
 /**
- * StringListBuilder - Auto-sizing STRING list builder
+ * StringConcat - Auto-sizing STRING list builder
  *
  * Chỉ đồng bộ số slot thông qua giá trị `input_count`, hoàn toàn loại bỏ lag!
  */
 
 import { app } from "../../scripts/app.js";
 
-const NODE_NAME = "StringListBuilder";
+const NODE_NAME = "StringConcat";
 const INPUT_PREFIX = "string_";
 const INPUT_TYPE = "STRING";
 
@@ -36,7 +36,7 @@ function syncInputsWithCount(node, count) {
 }
 
 app.registerExtension({
-  name: "sortlist.StringListBuilder",
+  name: "sortlist.StringConcat",
 
   async beforeRegisterNodeDef(nodeType, nodeData) {
     if (nodeData.name !== NODE_NAME) return;

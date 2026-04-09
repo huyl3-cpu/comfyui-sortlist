@@ -119,7 +119,7 @@ _safe_merge("nodes.value.set_value_mc_v2v")
 _safe_merge("nodes.value.set_value_mc_v2v_v2")
 _safe_merge("nodes.value.set_value_mc_i2v")
 _safe_merge("nodes.value.set_value_mc_i2v_v2")
-_safe_merge("nodes.value.string_list_builder")
+_safe_merge("nodes.value.string_concat")
 
 
 from .nodes.value.set_value_with_path import NODE_CLASS_MAPPINGS as _m, NODE_DISPLAY_NAME_MAPPINGS as _n
