@@ -1,27 +1,23 @@
 """
 StringListBuilder - Gom nhiều STRING input thành 1 list.
-Input slots tự động tăng thêm khi cái cuối được nối dây (via JS extension).
+Dựa vào giá trị từ `input_count` để điều chỉnh số lượng dây (siêu nhẹ, không dùng onConnectionsChange).
 """
 
 
 class StringListBuilder:
     """
-    Nhận nhiều STRING input (tự động mở rộng khi nối dây),
+    Nhận nhiều STRING input xác định bởi `input_count`,
     trả về một STRING list.
-
-    - Mỗi input là một string riêng biệt (1 slot = 1 phần tử trong list)
-    - Khi nối dây vào slot cuối cùng, slot mới tự động được thêm vào
-    - Slot rỗng ở cuối tự động bị dọn khi ngắt kết nối
-    - Output là LIST of STRING
     """
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
-            "required": {},
+            "required": {
+                "input_count": ("INT", {"default": 2, "min": 1, "max": 100, "step": 1}),
+            },
             "optional": {
-                "string_1": ("STRING", {"forceInput": True}),
-                "string_2": ("STRING", {"forceInput": True}),
+                # Các slot string_1, string_2... sẽ được thêm động bằng JS khi đổi input_count
             },
         }
 
@@ -32,21 +28,20 @@ class StringListBuilder:
     CATEGORY = "sortlist/value"
     DESCRIPTION = (
         "Gom nhiều STRING input thành một danh sách (LIST). "
-        "Số lượng input tự động tăng khi nối dây vào slot cuối cùng."
+        "Số lượng input do bạn tự tùy chỉnh bằng thanh 'input_count' cực kỳ nhẹ."
     )
 
-    def build(self, **kwargs):
+    def build(self, input_count, **kwargs):
         result = []
-        i = 1
-        while True:
+        
+        # Duyệt đúng số lượng input_count mà node yêu cầu
+        for i in range(1, input_count + 1):
             key = f"string_{i}"
-            if key not in kwargs:
-                break
-            val = kwargs[key]
+            val = kwargs.get(key)
             if val is not None:
                 result.append(str(val))
-            i += 1
-
+            # Nếu người dùng không nối dây, ô đó bị bỏ qua, không gây đứt gãy list
+                
         # Đảm bảo luôn trả về ít nhất 1 phần tử để tránh lỗi downstream
         if not result:
             result = [""]
