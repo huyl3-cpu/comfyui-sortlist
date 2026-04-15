@@ -1,23 +1,30 @@
 """
-WanVideo Frame Window Size Calculator
-Tính frame_window_size (x) từ tổng số frame và số lần sampling (n).
+WanAnimate Frame Window Size Calculator
+Tinh frame_window_size (x) toi uu tu tong so frame.
 
-Công thức WanVideo:  output_frames = x * n + 1
-Wan VAE yêu cầu:     x = 4k+1  (k = 0,1,2,...) tức là x ∈ {1,5,9,...,117,121,125,...}
-Ràng buộc:           x <= 121  (x_max = 121)
+Cong thuc WanAnimate DUNG:
+  output_frames = 1 + n * (x - 1)
 
-Thuật toán tìm x:
-  1. min_x = ceil(total_frames / n)  (để x*n + 1 > total_frames → không thiếu frame)
-  2. x = nearest 4k+1 >= min_x
-  3. Nếu x > 121 → tăng n và thử lại
+  Giai thich: moi window chong lap 1 frame voi window truoc (refert_num=1),
+  nen stride thuc te = x - 1 (khong phai x).
+  WanAnimate tu tinh n = ceil((total_frames - 1) / (x - 1)).
 
-Tự động n=1 khi total_frames <= 122 (video ngắn, 1 window là đủ).
+Wan VAE yeu cau:  x = 4k+1  (k=0,1,2,...) => {1,5,9,13,...,117,121}
+Rang buoc:        x <= 121  (x_max = 121)
 
-Ví dụ (n=4):
-  total=357  → min_x=ceil(357/4)=90 → x=93 (4*23+1)
-              → output_frames=93*4+1=373 (thừa 373-357=16 frame cuối)
+Thuat toan tim x toi uu (it frame thua nhat):
+  Voi moi x hop le trong [min_window_size, X_MAX]:
+    stride = x - 1
+    n = ceil((total_frames - 1) / stride)
+    output = 1 + n * stride
+    waste = output - total_frames
+  => chon x cho waste nho nhat.
 
-Node 2 (WanTrimFrames): cắt bỏ frame thừa, giữ lại đúng total_frames frame.
+Vi du (total=453, min_window_size=77 mac dinh):
+  x=77  -> stride=76, n=ceil(452/76)=6 -> output=1+6*76=457  (waste=4)  <- TOT
+  x=113 -> stride=112, n=ceil(452/112)=5 -> output=1+5*112=561 (waste=108) <- Lang phi!
+
+Node 2 (WanTrimFrames): cat bo frame thua, giu lai dung total_frames frame.
 """
 import math
 # torch imported lazily inside WanTrimFrames.trim() to allow standalone testing
@@ -40,15 +47,12 @@ def _next_4k1(n: int) -> int:
 
 class WanFrameWindowSize:
     """
-    Tính frame_window_size (x) cho WanVideo:
+    Tính frame_window_size (x) cho WanAnimate:
       • x phải có dạng 4k+1  (yêu cầu của Wan VAE)
       • x <= 121  (x_max = 121)
-      • x*n + 1 >= total_frames  (đủ frame để sample)
-      • x nhỏ nhất thỏa mãn (tối thiểu waste)
-
-    Đặc biệt:
-      • total_frames <= 122 → n=1 tự động (video ngắn, 1 window đủ)
-      • Nếu x vẫn > 121 → tự tăng n cho đến khi x <= 121
+      • Công thức ĐÚNG: output = 1 + n * (x - 1)   [stride = x-1 do overlap 1 frame]
+      • WanAnimate tự tính n = ceil((total_frames - 1) / (x - 1))
+      • Tìm x trong [min_window_size, X_MAX] cho ít frame thừa nhất
     """
 
     X_MAX = 121  # max valid 4k+1 <= 121 (4*30+1=121)
@@ -64,6 +68,17 @@ class WanFrameWindowSize:
                     "step": 1,
                     "tooltip": "Tổng số frame của video input",
                 }),
+                "min_window_size": ("INT", {
+                    "default": 77,
+                    "min": 5,
+                    "max": 121,
+                    "step": 4,
+                    "tooltip": (
+                        "Window size nhỏ nhất được phép (4k+1).\n"
+                        "Lớn hơn = ít windows hơn nhưng có thể lãng phí frame hơn.\n"
+                        "Nhỏ hơn = nhiều windows hơn nhưng ít frame thừa hơn."
+                    ),
+                }),
             },
         }
 
@@ -72,46 +87,71 @@ class WanFrameWindowSize:
     FUNCTION      = "calculate"
     CATEGORY      = "utils"
     DESCRIPTION   = (
-        "Tự động tính frame_window_size (x = 4k+1, x ≤ 121) và n nhỏ nhất\n"
-        "sao cho x*n+1 > total_frames.\n"
-        "Output frame_diff = output_frames - total_frames (số frame thừa cần trim)."
+        "Tính frame_window_size (x = 4k+1, x ≤ 121) tối ưu cho WanAnimate.\n"
+        "Công thức đúng: output = 1 + n*(x-1)  (stride = x-1, overlap 1 frame).\n"
+        "Tìm x trong [min_window_size, 121] cho ít frame thừa nhất.\n"
+        "frame_diff = output_frames - total_frames (số frame thừa cần trim)."
     )
 
-    def calculate(self, total_frames: int):
-        # ── Trường hợp đặc biệt: 1 frame ──────────────────────────────────
+    def calculate(self, total_frames: int, min_window_size: int = 77):
+        # Special case: 1 frame
         if total_frames <= 1:
-            print("[WanFrameWindow] total=1 → x=1, n=1")
+            print("[WanFrameWindow] total=1 -> x=1, n=1")
             return (1, 2, 1, 1)
 
-        # ── Video ngắn: total_frames <= 122 → 1 window đủ ─────────────────
-        # next_4k1(total_frames-1) luôn <= 121 khi total_frames-1 <= 121
-        if total_frames <= 122:
-            effective_n = 1
-            x = _next_4k1(total_frames - 1)   # guaranteed <= 121
-            output_frames = x * effective_n + 1
-            frame_diff = output_frames - total_frames
-            print(
-                f"[WanFrameWindow] total={total_frames} → n=1 (video ngắn)"
-                f" → x={x} (4*{(x-1)//4}+1), output={output_frames} (diff={frame_diff:+d})"
-            )
-            return (x, output_frames, frame_diff, effective_n)
+        # Special case: total_frames fits in 1 window even below min_window_size
+        # Use next 4k+1 >= total_frames (1 window, output = x >= total_frames)
+        x_single = _next_4k1(total_frames)
+        if x_single <= self.X_MAX and x_single < min_window_size:
+            # Video short enough: 1 window with smallest valid x
+            output = x_single          # = 1 + 1*(x_single - 1) = x_single
+            diff   = output - total_frames
+            print(f"[WanFrameWindow] total={total_frames} -> n=1 (short video)"
+                  f" -> x={x_single} (4*{(x_single-1)//4}+1), output={output} (diff={diff:+d})")
+            return (x_single, output, diff, 1)
 
-        # ── Công thức đóng: n = ⌈(y−1) / X_MAX⌉ ─────────────────
-        # - Đây là n nhỏ nhất đảm bảo (y-1)/n ≤ X_MAX → min_x ≤ X_MAX
-        # - next_4k1(min_x) luôn ≤ X_MAX vì X_MAX = 4k+1 (121=4*30+1)
-        effective_n = math.ceil((total_frames - 1) / self.X_MAX)
-        min_x = math.ceil((total_frames - 1) / effective_n)
-        x = _next_4k1(min_x)
+        # Normalise min_window_size to the nearest valid 4k+1 >= min_window_size
+        min_k = math.ceil((min_window_size - 1) / 4)
+        min_k = max(1, min_k)   # x >= 5
 
-        output_frames = x * effective_n + 1
-        frame_diff = output_frames - total_frames
+        # Core algorithm:
+        # WanAnimate formula: output = 1 + n * (x - 1)  [stride = x-1, 1-frame overlap]
+        # WanAnimate computes n internally: n = ceil((total_frames - 1) / (x - 1))
+        # => output = 1 + ceil((total_frames - 1) / (x-1)) * (x-1)
+        # Search all valid x in [min_window_size, X_MAX] and pick the one with least waste.
+        best_x = best_output = best_diff = best_n = None
+
+        for k in range(min_k, 31):      # x = 4k+1, k from min_k to 30 (x=121)
+            x = 4 * k + 1
+            if x > self.X_MAX:
+                break
+            stride = x - 1
+            n = math.ceil((total_frames - 1) / stride)
+            output = 1 + n * stride
+            diff = output - total_frames    # always >= 0
+
+            if best_diff is None or diff < best_diff:
+                best_diff   = diff
+                best_x      = x
+                best_output = output
+                best_n      = n
+
+            if diff == 0:
+                break   # perfect fit — can't do better
+
+        # Fallback: min_window_size > X_MAX (shouldn't normally happen)
+        if best_x is None:
+            best_x = self.X_MAX
+            best_n = math.ceil((total_frames - 1) / (self.X_MAX - 1))
+            best_output = 1 + best_n * (self.X_MAX - 1)
+            best_diff = best_output - total_frames
 
         print(
             f"[WanFrameWindow] total={total_frames}"
-            f" → n={effective_n}, x={x} (4*{(x-1)//4}+1)"
-            f" → output={output_frames} (diff={frame_diff:+d}, trim {frame_diff} frame cuối)"
+            f" -> n={best_n}, x={best_x} (4*{(best_x-1)//4}+1)"
+            f" -> output={best_output} (diff={best_diff:+d}, trim {best_diff} frames)"
         )
-        return (x, output_frames, frame_diff, effective_n)
+        return (best_x, best_output, best_diff, best_n)
 
 
 # ── Node 2: WanTrimFrames ─────────────────────────────────────────────────────
@@ -202,11 +242,18 @@ if __name__ == "__main__":
     node = WanFrameWindowSize()
     tests = [
         1, 2, 5, 10, 81, 97, 98, 99, 101, 102,
-        357, 373, 388, 389, 700, 1000, 5000,
+        357, 373, 388, 389, 453, 561, 700, 1000, 5000,
     ]
-    print(f"{'total':>6} | {'x':>4} {'n_auto':>6} {'output':>7} {'diff':>6}  check")
-    print("-" * 55)
+    print(f"{'total':>6} | {'x':>4} {'n':>4} {'output':>7} {'waste':>6}  check (formula: 1+n*(x-1))")
+    print("-" * 65)
     for tf in tests:
-        x, out, diff, nu = node.calculate(tf)
-        ok = "✓" if x == (4 * ((x-1)//4) + 1) and x <= 121 and out > tf else "✗"
-        print(f"{tf:>6} | {x:>4} {nu:>6} {out:>7} {diff:>+6}  {ok} x=4*{(x-1)//4}+1")
+        x, out, diff, n = node.calculate(tf, min_window_size=77)
+        # verify: output = 1 + n*(x-1) >= total, x is 4k+1, x<=121
+        expected_out = 1 + n * (x - 1)
+        ok = "OK" if (x == 4*((x-1)//4)+1 and x <= 121 and out >= tf and out == expected_out) else "FAIL"
+        print(f"{tf:>6} | {x:>4} {n:>4} {out:>7} {diff:>+6}  {ok} x=4*{(x-1)//4}+1")
+    print()
+    print("Bug reproduction (old formula x*n+1 vs correct 1+n*(x-1)):")
+    tf = 453; x, out, diff, n = node.calculate(tf, min_window_size=77)
+    print(f"  total={tf}: x={x}, n={n}, output(correct)={out}, waste={diff}")
+    print(f"  Old bug: x=113,n=4 -> old_formula=113*4+1=453, actual=1+5*112=561 (waste=108)")
