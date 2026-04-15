@@ -69,14 +69,24 @@ class WanFrameWindowSize:
                     "tooltip": "Tổng số frame của video input",
                 }),
                 "min_window_size": ("INT", {
-                    "default": 77,
+                    "default": 93,
                     "min": 5,
                     "max": 121,
                     "step": 4,
                     "tooltip": (
-                        "Window size nhỏ nhất được phép (4k+1).\n"
-                        "Lớn hơn = ít windows hơn nhưng có thể lãng phí frame hơn.\n"
-                        "Nhỏ hơn = nhiều windows hơn nhưng ít frame thừa hơn."
+                        "Window size nho nhat (4k+1). Default=93.\n"
+                        "Khuyen nghi: 93-113 cho chat luong WanAnimate tot nhat."
+                    ),
+                }),
+                "max_window_size": ("INT", {
+                    "default": 113,
+                    "min": 5,
+                    "max": 121,
+                    "step": 4,
+                    "tooltip": (
+                        "Window size lon nhat (4k+1). Default=113.\n"
+                        "Window nho hon 90 => chat luong kem.\n"
+                        "Window lon hon 114 => lang phi frames nhieu."
                     ),
                 }),
             },
@@ -87,13 +97,18 @@ class WanFrameWindowSize:
     FUNCTION      = "calculate"
     CATEGORY      = "utils"
     DESCRIPTION   = (
-        "Tính frame_window_size (x = 4k+1, x ≤ 121) tối ưu cho WanAnimate.\n"
+        "Tinh frame_window_size (x = 4k+1) toi uu cho WanAnimate.\n"
+        "Cong thuc dung: output = 1 + n*(x-1)  (stride = x-1, overlap 1 frame).\n"
+        "Tim x trong [min_window_size, max_window_size] cho it frame thua nhat.\n"
+        "Khuyen nghi: 93 <= x <= 113 cho chat luong tot.\n"
+        "frame_diff = output_frames - total_frames (so frame thua can trim)."
+    ) tối ưu cho WanAnimate.\n"
         "Công thức đúng: output = 1 + n*(x-1)  (stride = x-1, overlap 1 frame).\n"
         "Tìm x trong [min_window_size, 121] cho ít frame thừa nhất.\n"
         "frame_diff = output_frames - total_frames (số frame thừa cần trim)."
     )
 
-    def calculate(self, total_frames: int, min_window_size: int = 77):
+    def calculate(self, total_frames: int, min_window_size: int = 93, max_window_size: int = 113):
         # Special case: 1 frame
         if total_frames <= 1:
             print("[WanFrameWindow] total=1 -> x=1, n=1")
@@ -121,7 +136,12 @@ class WanFrameWindowSize:
         # Search all valid x in [min_window_size, X_MAX] and pick the one with least waste.
         best_x = best_output = best_diff = best_n = None
 
-        for k in range(min_k, 31):      # x = 4k+1, k from min_k to 30 (x=121)
+        # Clamp max_window_size to a valid 4k+1 <= X_MAX
+        max_k = min(30, (max_window_size - 1) // 4)   # largest k so that 4k+1 <= max_window_size
+        if max_k < min_k:
+            max_k = min_k  # safety: ensure at least one candidate
+
+        for k in range(min_k, max_k + 1):  # x = 4k+1, within [min_window_size, max_window_size]
             x = 4 * k + 1
             if x > self.X_MAX:
                 break
@@ -139,11 +159,12 @@ class WanFrameWindowSize:
             if diff == 0:
                 break   # perfect fit — can't do better
 
-        # Fallback: min_window_size > X_MAX (shouldn't normally happen)
+        # Fallback: no valid x found (e.g. constraints too tight)
         if best_x is None:
-            best_x = self.X_MAX
-            best_n = math.ceil((total_frames - 1) / (self.X_MAX - 1))
-            best_output = 1 + best_n * (self.X_MAX - 1)
+            x_fb = 4 * max_k + 1
+            best_x = x_fb
+            best_n = math.ceil((total_frames - 1) / (x_fb - 1))
+            best_output = 1 + best_n * (x_fb - 1)
             best_diff = best_output - total_frames
 
         print(
